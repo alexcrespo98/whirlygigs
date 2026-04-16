@@ -23,6 +23,7 @@ class DL24:
     REG_CURRENT_MA = 0x0011
 
     MODE_CONSTANT_RESISTANCE = 0x0002
+    MIN_RESISTANCE_CENTIOHM = 1  # 0.01 Ω; verify effective minimum for your firmware/hardware
 
     def __init__(self, port: str = "/dev/ttyUSB0", baud: int = 9600, address: int = 0x01) -> None:
         self.port = port
@@ -100,7 +101,7 @@ class DL24:
         self.write_multiple_registers(self.REG_MODE, [self.MODE_CONSTANT_RESISTANCE])
 
     def set_resistance(self, ohms: float) -> None:
-        centiohm = max(1, int(round(ohms * 100)))
+        centiohm = max(self.MIN_RESISTANCE_CENTIOHM, int(round(ohms * 100)))
         self.write_multiple_registers(self.REG_RESISTANCE_CENTIOHM, [centiohm])
 
     def load_on(self) -> None:

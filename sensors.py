@@ -25,6 +25,7 @@ except Exception:  # pragma: no cover - non-Pi environments
 
 PRESSURE_SENSOR_MAX_BAR = 16.0
 BAR_TO_PSI = 14.5038
+ADS1115_GAIN_TWOTHIRDS = 2 / 3  # ±6.144V full-scale range
 
 
 @dataclass
@@ -85,7 +86,7 @@ class SensorSuite:
         if all(module is not None for module in (board, busio, ADS, AnalogIn)):
             i2c = busio.I2C(board.SCL, board.SDA)
             self._ads = ADS.ADS1115(i2c, address=self.ads_address)
-            self._ads.gain = 2 / 3  # ±6.144V full scale
+            self._ads.gain = ADS1115_GAIN_TWOTHIRDS
             self._chan0 = AnalogIn(self._ads, ADS.P0)
             self._chan1 = AnalogIn(self._ads, ADS.P1)
             self._chan2 = AnalogIn(self._ads, ADS.P2)

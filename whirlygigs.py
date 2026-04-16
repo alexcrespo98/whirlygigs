@@ -85,7 +85,7 @@ def save_baseline_calibration(baseline: Dict[float, float], path: Path = CALIBRA
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
-        writer.writerow(["# flow_gpm", "dp_baseline_psi"])
+        writer.writerow(["# flow_gpm", "dP_baseline_PSI"])
         for flow in sorted(baseline):
             writer.writerow([flow, baseline[flow]])
 
@@ -157,7 +157,14 @@ def choose_turbine() -> Turbine:
     except ValueError:
         choice = 1
     if choice == len(turbines) + 1:
-        tid = input("Custom turbine letter ID (single capital): ").strip().upper()[:1] or "U"
+        existing_ids = {t.tid.upper() for t in turbines}
+        tid = input("Custom turbine letter ID (single capital): ").strip().upper()[:1]
+        if not tid:
+            tid = "U"
+            suffix = 1
+            while tid in existing_ids:
+                tid = f"U{suffix}"
+                suffix += 1
         name = input("Turbine name: ").strip() or "Unlisted"
         ttype = input("Turbine type: ").strip() or "Unknown"
         return Turbine(tid, name, ttype)
@@ -167,7 +174,7 @@ def choose_turbine() -> Turbine:
 
 def find_min_start_flow(sensor: SensorSuite, meter: FlowMeter) -> float:
     print("\nStep 6: Install turbine and raise flow until generator produces voltage.")
-    print("Watching for generator DC voltage > 0.05 V...")
+    print(f"Watching for generator DC voltage > {GEN_MIN_VOLTAGE_V:.2f} V...")
     min_flow_gpm = 0.0
     while True:
         flow_hz, _ = sensor.pulse_rates_hz()
