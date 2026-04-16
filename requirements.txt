@@ -1,0 +1,4 @@
+pyserial>=3.5
+RPi.GPIO>=0.7.1
+adafruit-blinka>=8.0.0
+adafruit-circuitpython-ads1x15>=2.4.0

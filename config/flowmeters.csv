@@ -1,0 +1,4 @@
+# Whirlygigs Flow Meter Configuration
+# Format: name,k_hz_per_gpm
+# Q[GPM] = flow_hz / k_hz_per_gpm
+GEMS FT100,11.0
