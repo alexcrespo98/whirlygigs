@@ -102,8 +102,6 @@ xychart-beta
 
 *Data reproduced from Bradley in-house testing, 2023.*
 
-![](images/flowmeters_performance_curves_bradley_2023.png)
-
 ### 2.3 Hall Effect Sensors
 
 The turbine's embedded magnet is read by an external Hall effect sensor. The GEMS 238600 emits approximately **100 Gauss** at the sensor zone (measured in-house against a reference Hall sensor).
@@ -152,14 +150,6 @@ Full admission generators can start generating at lower flow rates, critical for
 | **Typical coil shape** | Pancake (claw pole) or wrapped cylinder (belt) | Small rings pointing inward, or ring-in-ring |
 | **Flux guides needed?** | Yes, always required for both claw pole and belt variants | Typically no (spoke/gyro) |
 | **Cycles per revolution** | Equal to the number of magnet pole pairs, matched by the number of claw-pole pairs in the flux guide | Equal to the number of magnet pole pairs |
-
-![](images/coil_configuration_claw_pole_labeled.png)
-
-![](images/coil_configuration_belt_wrapped_labeled.png)
-
-![](images/coil_configuration_spoke_hub_generator_labeled.png)
-
-![](images/coil_configuration_gyro_ring_in_ring_labeled.png)
 
 #### Coil Configurations
 
@@ -221,47 +211,11 @@ Turbine generators are classified by rotor orientation, admission type, flux dir
 
 #### Family Tree
 
-```mermaid
-flowchart TD
-    ROOT([Turbine Generators])
 
-    ROOT --> AXIAL[Axial Rotor<br/><i>propeller, axis ∥ flow</i>]
-    ROOT --> RADIAL[Radial Rotor<br/><i>axis ⊥ flow</i>]
+![[Pasted image 20260423205550.png]]
 
-    AXIAL --> AFULL[Always Full Admission]
-    AFULL --> A_RF[Radial Flux<br/>Gyro]
-    AFULL --> A_AF[Axial Flux<br/><i>theoretical; no example</i>]
-    A_RF --> EX_M6[M6 Axial Propeller]
 
-    RADIAL --> R_FULL[Full Admission<br/>Axial Flux]
-    RADIAL --> R_PART[Partial Admission<br/>Radial Flux<br/>Hub Generator]
-
-    R_PART --> EX_F50[F50]
-
-    R_FULL --> CLAW[Claw Pole<br/><i>pancake</i>]
-    R_FULL --> BELT[Belt<br/><i>wrapped</i>]
-
-    CLAW --> EX_ZURN[Zurn P6900]
-    BELT --> SINGLE[Single Coil]
-    BELT --> DUAL[Dual Coil]
-    SINGLE --> EX_TOTO1[Toto EcoPower Insert]
-    DUAL --> EX_TOTO2[Toto 10s Dynamo<br/>EDV462 / EDV561]
-
-    classDef root fill:#263238,color:#fff,stroke:#000,stroke-width:2px
-    classDef rotor fill:#0D47A1,color:#fff,stroke:#000,stroke-width:1px
-    classDef admission fill:#1B5E20,color:#fff,stroke:#000,stroke-width:1px
-    classDef flux fill:#4A148C,color:#fff,stroke:#000,stroke-width:1px
-    classDef coil fill:#E65100,color:#fff,stroke:#000,stroke-width:1px
-    classDef example fill:#FFF9C4,color:#000,stroke:#B71C1C,stroke-width:2px
-
-    class ROOT root
-    class AXIAL,RADIAL rotor
-    class AFULL,R_FULL,R_PART admission
-    class A_RF,A_AF,CLAW,BELT,SINGLE,DUAL coil
-    class EX_M6,EX_F50,EX_ZURN,EX_TOTO1,EX_TOTO2 example
-```
-
-*Legend: 🟦 rotor type · 🟩 admission · 🟪 flux / coil configuration · 🟨 commercial example*
+*Legend: 🟦 rotor type · 🟩 admission · 🟧 flux / coil configuration · 🟨 commercial example*
 
 ---
 
@@ -729,8 +683,6 @@ $$\text{mWh/gal} = \frac{P_{mW}}{Q_{GPM} \times 60}$$
 
 If two inputs are unknown, generate a scatter plot, one point per turbine, two unknown variables as axes, for visual trade-off comparison.
 
-![](images/turbine_scatter_cost_vs_power_at_median_Q.png)
-
 ---
 
 ## 7. Application Examples
@@ -790,109 +742,54 @@ Flow range closely overlaps Bradley so the same candidate turbines apply. For co
 
 ## Appendix A: Spec Template
 
-| Category | Parameter | Value |
-|---|---|---|
-| **Classification** | Rotor type | Axial / Radial |
-| | Admission | Full / Partial |
-| | Flux type | Axial / Radial |
-| | Coil type | Claw pole / Belt / Hub generator / Gyro |
-| | Coil config | Single / Dual / Multi |
-| | Output type | Raw AC / Unregulated DC / Regulated DC |
-| | Claw poles (if applicable) | |
-| **Measured** | $N$ (turns) | |
-| | $R_{coil}$ (total, DC) | |
-| | Wire gauge | |
-| | Coil ID / OD (mm) | |
-| **Cannot Measure** | $B$ (magnetic field) | No gaussmeter |
-| | $L$ (inductance) | LH meter TBD |
-| **Experimental** | Lumped flux coupling | From open-circuit tests |
-| | $\eta_{turbine}$ | |
-| | $c_f$ (viscous friction) | |
-| | $\tau_0$ (static friction) | |
-| | $R_{eff}$ (Ω) | From efficiency vs. $R$ sweep |
-| | $Q_{eff}$ (GPM) | Flow rate at peak efficiency |
-| | Min Flow = $Q_{eff}$? | True / False |
-| | $R_{max}$ (Ω) | If Min Flow = $Q_{eff}$; else N/A |
-| **Design Point** | $\Delta P$ (rated pressure) | |
-| | $Q$ (rated flow) | |
-| | $P_{load}$ (rated power) | |
-| | $R_{load}$ (design load) | $R_{eff}$ or $R_{max}$ |
+| Category           | Parameter                   | Value                                   |
+| ------------------ | --------------------------- | --------------------------------------- |
+| **Classification** | Rotor type                  | Axial / Radial                          |
+|                    | Admission                   | Full / Partial                          |
+|                    | Flux type                   | Axial / Radial                          |
+|                    | Coil type                   | Claw pole / Belt / Hub generator / Gyro |
+|                    | Coil config                 | Single / Dual / Multi                   |
+|                    | Output type                 | Raw AC / Unregulated DC / Regulated DC  |
+|                    | Claw poles (if applicable)  |                                         |
+| **Measured**       | $N$ (turns)                 |                                         |
+|                    | $R_{coil}$ (total, DC)      |                                         |
+|                    | Wire gauge                  |                                         |
+|                    | Coil ID / OD (mm)           |                                         |
+| **Cannot Measure** | $B$ (magnetic field)        | No gaussmeter                           |
+|                    | $L$ (inductance)            | LH meter TBD                            |
+| **Experimental**   | Lumped flux coupling        | From open-circuit tests                 |
+|                    | $\eta_{turbine}$            |                                         |
+|                    | $c_f$ (viscous friction)    |                                         |
+|                    | $\tau_0$ (static friction)  |                                         |
+|                    | $R_{eff}$ (Ω)               | From efficiency vs. $R$ sweep           |
+|                    | $Q_{eff}$ (GPM)             | Flow rate at peak efficiency            |
+|                    | Min Flow = $Q_{eff}$?       | True / False                            |
+|                    | $R_{max}$ (Ω)               | If Min Flow = $Q_{eff}$; else N/A       |
+| **Design Point**   | $\Delta P$ (rated pressure) |                                         |
+|                    | $Q$ (rated flow)            |                                         |
+|                    | $P_{load}$ (rated power)    |                                         |
+|                    | $R_{load}$ (design load)    | $R_{eff}$ or $R_{max}$                  |
 
 ---
 
 ## Appendix B: Catalogue: Flow Meters
 
-| Parameter | GEMS 238600 + A1220 | GEMS 238600 + A1171 | Gredia FS200A | Sea YF-S201 | Uxcell | Sika VY10 | Auk Mueller MT5 | Digiflow 8100T-22 |
-|---|---|---|---|---|---|---|---|---|
-| **Category** | Custom Build | Custom Build | Off-the-shelf | Off-the-shelf | Off-the-shelf | Off-the-shelf | Off-the-shelf | Display Included |
-| **Manufacturer** | GEMS Setra (Plainville, CT) | GEMS Setra (Plainville, CT) | Gredia (China) | Sea (China) | Uxcell (China) | Sika (Germany) | A.u.K. Muller (Germany) | Savant / Digiflow |
-| **Turbine Type** | Axial | Axial | Radial | Radial | Radial | Axial | Axial | Radial |
-| **Admission** | Fully enclosed | Fully enclosed | Partial | Partial | Partial | Full | Full | Partial |
-| **Min Flow (GPM)** | 0.08 | 0.08 | ~0.13 | ~0.26 | ~0.1-0.15 | 0.16-0.18 | 0.05 | 0.21 |
-| **Max Flow (GPM)** | 2.0 (tested to 4.0) | 2.0 (tested to 4.0) | 7.9 | 7.9 | 7.9 | 7.9 | 3.96 | 3.96 |
-| **Signal Sensor** | Allegro A1220 | Allegro A1171 | Built-in Hall | Built-in Hall | Built-in Hall | Built-in Hall (NPN open collector) | External detector clip | Built-in Hall |
-| **Output** | Hall pulse (freq) | Hall pulse (freq) | Hall pulse | Hall pulse | Hall pulse | Square wave freq | Hall pulse (open drain) | LCD display |
-| **Active Power** | ~12 mW @ 3V (always on, 4 mA continuous) | ~42 μW | ~75 mW @ 5V | ~75 mW @ 5V | ~75 mW @ 5V | 45-240 mW | N/A | ~3 mW |
-| **Sleep Power** | N/A (no sleep mode) | ~15 μW | N/A | N/A | N/A | N/A | N/A | ~45 μW |
-| **Accuracy** | High linearity | High linearity | $\pm$1-2% | $\pm$10% | N/A | $\pm$1% | $\pm$2% | $\pm$5% |
-| **NSF / WRAS** | NSF 61, WRAS | NSF 61, WRAS | No | No | No | NSF 61, 372, WRAS, KTW, ACS | NSF approved | NSF 61/9 |
-| **Max Temp** | 160°F | 160°F | 248°F | N/A | N/A | 194°F (brass) / 158°F (plastic) | 194°F media | 170°F |
-| **Max Pressure** | 150 PSI | 150 PSI | 174 PSI | 254 PSI | N/A | 232 PSI (brass) / 145 PSI (plastic) | 232 PSI | 112 PSI |
-| **Fitting** | Custom 3/8" FNPT | Custom 3/8" FNPT | G1/2" | G1/2" | G1/2" | G1/2", G3/4", 1/2" NPT, QuickFasten | Cable (3x0.25mm² PVC) | 3/8" BSPP male |
-| **Materials** | ABS cage, Nylon 6 turbine, PEEK bearings | ABS cage, Nylon 6 turbine, PEEK bearings | ABS | Nylon | Plastic | Brass CW617N or Noryl 30% GF; SS shaft; hard ferrite magnet | PPSU body, SS shaft, ruby bearings, EPDM seals | PA66+50% GF, 304 SS axle, EPDM, ABS display |
-| **Custom Housing?** | Yes | Yes | No | No | No | No | No | No |
-| **Unit Cost** | $5.66-$7.55 + sensor | $5.66-$7.55 + ~$1 | $7.99 | $3.92 | $4.29 | $9.32 (5K vol) | $16.50-$17.60 | $17.33 |
-| **Notes** | Proven in Moen U & Delta Essa. Best low-flow sensitivity. | ~800x less power. Best for battery/harvesting. | Tested in-house. | Cheapest. Poor accuracy. Tested in-house. | Currently unavailable. Tested in-house. | Sapphire/PEEK bearings. Integrated flow straightener. 5kΩ pull-up needed. Tested in-house. | Two-part: turbine + detector clip. | Horizontal only. 2xAA. Sleep 15 μA. |
+![[Pasted image 20260424110120.png]]
 
 ---
 
 ## Appendix C: Catalogue: Generators
 
-**Testing summary:** Full bench characterization (R-sweep $\times$ Q-sweep) is complete for the **Zurn P6900** ($R_{eff}$ / $Q_{eff}$ demo, §4.4) and the **M6 Axial Propeller** ($R_{max}$ demo, §4.3). All other turbines have partial test data and are pending full bench time.
-
 ### Output Type Key
 
-| Output Type | Description |
-|---|---|
-| **Raw AC** | Unprocessed alternating current from the coil. No built-in circuitry. Frequency and amplitude both usable for sensing (see §4.5). |
-| **Unregulated DC** | Built-in diode bridge rectifies AC; voltage still varies with flow. Power at a fixed load usable for sensing. |
-| **Regulated DC** | Built-in voltage regulator holds output constant. Flow and pressure information lost at the output terminals. Power delivery only (or internal-Hall sensing via custom housing). |
-
-### Acquisition & Modularity Key
-
-| Icon | Meaning |
-|---|---|
-| 🟢 | Sold separately as standalone part |
-| 🔵 | Came with faucet purchase; modular / separable from assembly |
-| 🔴 | Came with faucet purchase; non-modular / must break assembly to remove |
+| Output Type        | Description                                                                                                                                                                                     |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Raw AC**         | Unprocessed alternating current from the coil. No built-in circuitry. Frequency and amplitude both usable for sensing (see §4.5).                                                               |
+| **Unregulated DC** | Built-in diode bridge rectifies AC; voltage still varies with flow. Power at a fixed load usable for sensing.                                                                                   |
+| **Regulated DC**   | Built-in voltage regulator holds output constant. Flow and pressure information lost at the output terminals. Power delivery only (or flow sense with internal-Hall sensor via custom housing). |
 
 ### Generator Comparison
 
-| Parameter | Sea DB-3682 | Sea DB-168 AC20V | Sea DB-168 DC5V | M6 Connector 5V | Zurn P6900-GEN | Sloan EFP40A | Toto EcoPower Insert (THP3275) | Toto TH559EDV462 (0.5 GPM Dynamo) | Toto TH559EDV561 (1.0 GPM Dynamo) |
-|---|---|---|---|---|---|---|---|---|---|
-| **Acquisition** | 🟢 Purchased | 🟢 Purchased | 🟢 Purchased | 🟢 Purchased | 🟢 Sold separately | 🔴 Part of faucet assembly | 🔵 Part of EcoPower faucet | 🟢 Sold separately | 🟢 Sold separately |
-| **Output Type** | Raw AC | Raw AC | Regulated DC | Regulated DC (tested via raw coil tap) | Regulated DC (tested via raw coil tap) | Regulated DC | Raw AC | Raw AC | Raw AC |
-| **Category** | Generator | Generator | Generator | Generator | Generator (+ battery) | Full Assembly | Generator | Generator | Generator |
-| **Manufacturer** | Sea / Dijiang (Foshan, China) | Sea / Dijiang (Foshan, China) | Sea / Dijiang (Foshan, China) | Generic (China) | Zurn | Sloan | Toto | Toto | Toto |
-| **Turbine Type** | Radial | Radial | Radial | Axial | Radial | Radial | Radial | Radial | Radial |
-| **Admission** | Full | Partial | Partial | Full | Full | Full | Full | Full | Full |
-| **Flux Type** | Axial | Radial | Radial | Radial | Axial | Axial | Axial | Axial | Axial |
-| **Coil Type** | Suspected hub generator, teardown required | Hub generator | Hub generator | Gyro (ring-in-ring) | Claw pole | Claw pole | Belt (wrapped) | Belt (wrapped) | Belt (wrapped) |
-| **Coil Config** | TBD | Multi (3-phase) | Multi (3-phase) | — | Single | Single | Single (2-wire) | Single | Dual |
-| **Output** | Raw AC 0-20V | Raw AC 0-20V | 5V DC | 5V DC | Internal battery + storage | Internal + battery backup | AC, 2-wire | AC, 9-35V | AC, 4-wire (dual coil) |
-| **Min Flow (GPM)** | ~0.53 | ~0.53 | ~0.53 | ~0.6 (tested) | ~0.17 (tested; 0.5 spec) | ~0.5 | N/A (not tested) | ~0.35-0.5 | ~0.35-0.5 |
-| **Max Flow (GPM)** | ~3.96 | ~2.64 | ~2.64 | ~3.5 (tested) | ~1.5 | ~2.2 | N/A (not tested) | ~0.5 | ~1.0 |
-| **Power Production** | Up to 3W | Up to ~1W | Up to 0.75W | ~490 mW @ $Q = 3.5$ GPM (tested) | ~369 mW @ $Q = 0.67$ GPM (tested) | ~mW range | ~0.5W (est.) | ~0.5W | ~0.5W |
-| **Max Current** | Up to 150 mA | Up to 150 mA | Up to 150 mA | Up to 100 mA | N/A | N/A | N/A | Up to 558 mA @ 12V | Up to 558 mA @ 12V |
-| **$R_{eff}$ (Ω)** | TBD | TBD | N/A | N/A (no interior peak) | **40** | TBD | TBD | TBD | TBD |
-| **$Q_{eff}$ (GPM)** | TBD | TBD | N/A | N/A (min flow = $Q_{eff}$) | **0.33** | TBD | TBD | TBD | TBD |
-| **Min Flow = $Q_{eff}$?** | TBD | TBD | N/A | Yes | No (interior peak) | TBD | TBD | TBD | TBD |
-| **$R_{max}$ (Ω)** | TBD | TBD | N/A | **~275** | N/A (interior $Q_{eff}$) | TBD | TBD | TBD | TBD |
-| **Min Starting Pressure** | ~7.25 PSI | ~7.25 PSI | ~7.25 PSI | N/A | 40 PSI (rec.) | 20 PSI | N/A | ~36 PSI | ~36 PSI |
-| **Fitting** | G1/2" | G1/2" | G1/2" | G1/2" + M6 | 1/2"-14 NPSM | Proprietary (undersink box) | Non-separable (in faucet spout) | Proprietary (undersink) | Proprietary (undersink) |
-| **Max Temp** | 140°F | 176°F | 176°F | N/A | N/A | N/A | N/A | N/A | N/A |
-| **Max Pressure** | 254 PSI | 174 PSI | 174 PSI | N/A | 80 PSI (rec.) | 125 PSI | N/A | 108 PSI | 108 PSI |
-| **NSF** | No | No | No | No | Yes | Yes | Yes (ASME, CSA) | Yes (ASME, CSA) | Yes (ASME, CSA) |
-| **Unit Cost** | $13 | $3.50 ($4 w/ NTC) | $3.50 ($4 w/ NTC) | $8 | ~$50-100+ | ~$80+ | Not sold separately | ~$50+ | ~$50+ |
-| **Tested?** | Partial | Partial | Partial | **Yes (full sweep, $R_{max}$ demo, see §4.3)** | **Yes (full sweep, $R_{eff}$ demo, see §4.4)** | No | No | Partial (primary test unit) | No |
-| **Notes** | Raw AC, freq proportional to flow extractable. 3W max. Suspected hub generator based on output characteristics; teardown required to confirm. | 3-phase AC. Cheapest generator. ~1000-3000 hr lifespan. 55 dB max. | Same body as AC20V. Regulated, frequency lost. ~10.5Ω line res
+![[Pasted image 20260424105619.png]]
+
+**Testing summary:** Full bench characterization (R-sweep $\times$ Q-sweep) is complete for the **Zurn P6900** ($R_{eff}$ / $Q_{eff}$ demo, §4.4) and the **M6 Axial Propeller** ($R_{max}$ demo, §4.3). All other turbines have partial test data and are pending full bench time.
