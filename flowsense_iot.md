@@ -1,4 +1,6 @@
-# Flow Sensing & Power Generation for IoT
+
+
+# Rotary Flow Sensing & Power Generation (0 to 4 GPM)
 
 **Watts Water Technologies**
 
@@ -8,39 +10,37 @@
 
 1. [Overview & Background](#1-overview--background)
 2. [Flow Sensing](#2-flow-sensing)
-3. [Turbine Generators](#3-turbine-generators)
-4. [Design Constraints & Generator Modification](#4-design-constraints--generator-modification)
-5. [Hybrid Systems: Generator + Meter + Storage](#5-hybrid-systems-generator--meter--storage)
-6. [Turbine Selection Framework](#6-turbine-selection-framework)
-7. [Application Examples](#7-application-examples)
-- [Appendix A: Spec Template](#appendix-a-spec-template)
-- [Appendix B: Catalogue: Flow Meters](#appendix-b-catalogue-flow-meters)
-- [Appendix C: Catalogue: Generators](#appendix-c-catalogue-generators)
-
+3. [Turbine Generators, Concepts](#3-turbine-generators-concepts)
+4. [Bench Testing & Load Selection](#4-bench-testing--load-selection)
+5. [Test Results](#5-test-results)
+6. [Sensing from a Generator](#6-sensing-from-a-generator)
+7. [System Architectures](#7-system-architectures)
+8. [Turbine Selection Framework](#8-turbine-selection-framework)
+9. [Application Examples](#9-application-examples)
+- [Appendix A: Catalogue: Flow Meters](#appendix-b-catalogue-flow-meters)
+- [Appendix B: Catalogue: Generators](#appendix-c-catalogue-generators)
 ---
 
 ## 1. Overview & Background
 
-This document is a master reference for flow sensing and power generation research conducted at **Watts Water Technologies**.
-
-It covers flow metering technology selection, micro hydro turbine generator analysis, a classification system for turbine types, testing methodology, load strategies, and a catalogue of all devices evaluated. A turbine selection framework and worked application examples are provided at the end.
+This document is a master reference for **flow sensing and power generation** research at **Watts Water Technologies**. The end goal is **rotary flow sensing in the 0 to 4 GPM range, paired where appropriate with micro-hydro power generation** for sealed or self-powered fixtures. Where wired power or replaceable batteries are acceptable, a dedicated flow meter is sufficient. Where the fixture must be sealed, long-life, or self-powered (which most often shows up in IoT-enabled products), a **micro-hydro turbine generator** is added that both powers the electronics and, optionally, doubles as the flow sensor. Most of this document is about selecting and characterizing those generators.
 
 **Design priorities across all applications:**
 
 - Low cost
 - Accurate at low flow rates
 - Low power consumption
-- Potential for self-powered IoT (no wired power, no battery replacement)
+- Potential for self-powered operation (no wired power, no battery replacement)
 
-### 1.1 Why Rotary? Why 0-4 GPM?
+### 1.1 Why Rotary? Why 0 to 4 GPM?
 
-The scope of this document is **0-4 GPM**. This range covers the fixtures of interest: bottle fillers, drinking stations, kitchen sinks, restroom sinks, and residential showers. Most single fixtures fall below 2 GPM; the 4 GPM ceiling accommodates multi-fixture configurations such as up to four sinks sharing one sensor, without changing the technology selection.
+The scope is **0 to 4 GPM**, covering bottle fillers, drinking stations, kitchen sinks, restroom sinks, and residential showers. Single fixtures are typically below 2 GPM; the 4 GPM ceiling accommodates multi-fixture configurations (e.g., up to four sinks on one sensor). Within this band, **0 to 1 GPM is treated as ultra-low flow**, where startup torque, bearing drag, and electromagnetic braking dominate behavior. Different turbines are best at different sub-ranges (some peak around 0.25 to 0.33 GPM, others closer to 1 GPM, others only above 2 GPM), and matching that sub-range to the application is a central job of the selection framework.
 
-Rotary sensing measures volume directly by counting spinner revolutions rather than inferring flow from pressure. At low flow rates, $\Delta P$ across any restriction is too small to measure reliably; a spinning turbine at 0.5 GPM produces a clear, countable pulse train. Above 4 GPM, differential pressure sensing takes over as the practical choice.
+Rotary sensing measures volume directly by counting spinner revolutions rather than inferring flow from pressure. At low flow, ΔP across any restriction is too small to measure reliably; a spinning turbine at 0.5 GPM produces a clean, countable pulse train. Above 4 GPM, differential pressure sensing takes over.
 
 ### 1.2 Prior Work
 
-An initial IoT Technology Readiness Report was prepared at Bradley, which benchmarked and tore down competitor faucets (U by Moen, Delta Essa VoiceIQ), independently confirming the GEMS 238600 turbine in both and validating it as the optimal sensing element. That report also identified differential pressure sensing as a viable approach for higher-flow products (EFX emergency showers at 15-30 GPM), and suggested continued research into turbine generators for self-powered applications, which is where this document continues.
+An initial IoT Technology Readiness Report at Bradley benchmarked and tore down competitor faucets (U by Moen, Delta Essa VoiceIQ), independently confirming the **GEMS 238600** turbine in both and validating it as the optimal sensing element. That report identified differential pressure sensing as viable for higher-flow products (EFX emergency showers at 15 to 30 GPM) and recommended continued research into turbine generators for self-powered applications, which is where this document picks up.
 
 ---
 
@@ -50,27 +50,27 @@ An initial IoT Technology Readiness Report was prepared at Bradley, which benchm
 
 | Technology | Principle | Strengths | Weaknesses | Best Fit |
 |---|---|---|---|---|
-| **Rotary (Turbine / Paddle)** | Spinning element; RPM proportional to flow | Low cost, good low-flow accuracy, insertable | Moving parts, wear | 0.08-8 GPM |
-| **Positive Displacement** | Fluid fills/empties fixed chambers | Good at low flow | Many moving parts, high $\Delta P$, complex housing | 0.25-2 GPM |
-| **Differential Pressure** | $\Delta P$ across restriction proportional to $Q^2$ | No moving parts, cheap sensors | Poor at low flow/pressure | >4 GPM |
-| **Ultrasonic** | Transit time of sound | Non-invasive, no $\Delta P$ | Expensive, special housing | High accuracy needs |
-| **Magnetic** | Faraday's law on conductive fluid | Non-invasive, accurate | Needs conductive particles, expensive | Industrial |
-| **Thermal / Coriolis** | Heat transfer or mass flow | Very accurate | Expensive, power-hungry | Not in scope |
-| **Vortex Shedding** | Oscillating vortices behind bluff body | Accurate, no moving parts | Min flow >2 GPM, high $\Delta P$, long length | >2 GPM |
-| **Vane / Piston** | Spring-loaded vane deflects with flow | Wide range, low-flow capable | Mechanical complexity, spring | Similar to turbine |
+| **Rotary (Turbine / Paddle)** | Spinning element; RPM ∝ flow | Low cost, good low-flow accuracy | Moving parts, wear | 0.08 to 8 GPM |
+| **Positive Displacement** | Fluid fills/empties fixed chambers | Good at low flow | Many moving parts, high ΔP | 0.25 to 2 GPM |
+| **Differential Pressure** | ΔP across restriction ∝ Q² | No moving parts, cheap | Poor at low flow | >4 GPM |
+| **Ultrasonic** | Transit time of sound | Non-invasive, no ΔP | Expensive, special housing | High accuracy |
+| **Magnetic** | Faraday's law on conductive fluid | Non-invasive, accurate | Needs conductive fluid | Industrial |
+| **Thermal / Coriolis** | Heat transfer or mass flow | Very accurate | Expensive, power-hungry | Out of scope |
+| **Vortex Shedding** | Vortices behind bluff body | Accurate, no moving parts | Min flow >2 GPM, high ΔP | >2 GPM |
+| **Vane / Piston** | Spring-loaded vane deflects with flow | Wide range, low-flow capable | Mechanical complexity | Similar to turbine |
 
 ### 2.2 Rotary Sensors: Radial vs. Axial
 
 | Type | Description | Min Flow | Notes |
 |---|---|---|---|
-| Radial / Paddle Wheel | Only part of rotor in flow path | ~0.1-0.25 GPM | Cheaper, less accurate at low flow |
-| Axial / Inline | Full propeller inline; Hall effect reads blades | ~0.05-0.08 GPM | Better low-flow sensitivity |
+| Radial / Paddle Wheel | Only part of rotor in flow path | ~0.1 to 0.25 GPM | Cheaper, less accurate at low flow |
+| Axial / Inline | Full propeller inline; Hall reads blades | ~0.05 to 0.08 GPM | Better low-flow sensitivity |
 
-Paddle-wheel meters (Gredia, Sea YF-S201, Uxcell) require higher flow to start spinning. Axial turbines (GEMS 238600, Sika VY10, Auk Mueller MT5) offer superior low-flow performance. The GEMS 238600, available as a turbine element or full assembly, was selected as the primary sensing element based on in-house testing and competitor validation.
+Paddle-wheel meters (Gredia, Sea YF-S201, Uxcell) require higher flow to start spinning. Axial turbines (GEMS 238600, Sika VY10, Auk Mueller MT5) offer superior low-flow performance. The **GEMS 238600** was selected as the primary sensing element based on in-house testing and competitor validation.
 
-#### Flowmeters Performance Curves
+#### Flowmeter Performance Curves
 
-Signal frequency vs. flow rate for five candidate rotary flow meters. All relationships are linear ($f = k \cdot Q$), as expected from direct pulse counting. The **GEMS 238600** produces roughly 4-5× the frequency-per-GPM of any other meter in the set, which is the primary reason it was selected: more pulses per unit volume means higher resolution at low flow, which is where fixture measurement lives.
+Signal frequency vs. flow rate is linear ($f = k \cdot Q$) for all rotary meters. The GEMS 238600 produces roughly **4 to 5x the frequency-per-GPM** of any other meter tested, which is the primary reason it was selected: more pulses per unit volume means higher resolution at low flow.
 
 ```mermaid
 ---
@@ -98,47 +98,51 @@ xychart-beta
 | 🟥 | Sea YF-S201 | ~30 |
 | 🟦 | Gredia FS200A | ~29 |
 | 🟩 | Sika VY10 | ~31 |
-| 🟧 | FS200A | ~32 |
+| 🟧 | Auk Mueller MT5 | ~32 |
 
 *Data reproduced from Bradley in-house testing, 2023.*
 
 ### 2.3 Hall Effect Sensors
 
-The turbine's embedded magnet is read by an external Hall effect sensor. The GEMS 238600 emits approximately **100 Gauss** at the sensor zone (measured in-house against a reference Hall sensor).
+The turbine's embedded magnet is read by an external Hall effect sensor. The GEMS 238600 emits approximately **100 Gauss** at the sensor zone (measured in-house).
 
-| Sensor | Supply Voltage | Active Current | Active Power | Sleep Current | $B_{OP}$ (Operate) | $B_{RP}$ (Release) | Key Advantage |
+| Sensor | Supply Voltage | Active Current | Active Power | Sleep Current | $B_{OP}$ | $B_{RP}$ | Key Advantage |
 |---|---|---|---|---|---|---|---|
-| **Allegro A1220** | 3-24V | 4 mA (always on) | ~12 mW @ 3V | N/A | 35 G typ | 15 G typ | Proven, wide voltage range |
-| **Allegro A1171** | 1.65-3.5V | 3.5-12 μA | ~15-42 μW | 8 μA | 45 G typ | 30 G typ | ~800x lower power than A1220 |
+| **Allegro A1220** | 3 to 24 V | 4 mA (always on) | ~12 mW @ 3 V | N/A | 35 G typ | 15 G typ | Proven, wide voltage range |
+| **Allegro A1171** | 1.65 to 3.5 V | 3.5 to 12 μA | ~15 to 42 μW | 8 μA | 45 G typ | 30 G typ | ~800x lower power than A1220 |
 
-Both operate comfortably with the 100 G field from the GEMS turbine. The A1171 is preferred for any battery-powered or energy-harvesting application.
+Both operate comfortably with the 100 G field from the GEMS turbine. The **A1171 is preferred for any battery-powered or energy-harvesting application**.
+
+> *Aside:* the A1171 has not yet been bench-validated against a live GEMS turbine in our setup. The 100 G field comfortably exceeds its typical $B_{OP}$ of 45 G on paper, but a confirmation pass with the live turbine should happen before designing it into a product.
+
+> **Shortcut for simple cases:** if the product allows wired power or a replaceable battery, the answer is GEMS 238600 + A1220 (wired) or A1171 (battery). Everything that follows is for the harder case: sealed, long-life, or self-powered deployments where a turbine generator is needed.
 
 ---
 
-## 3. Turbine Generators
+## 3. Turbine Generators, Concepts
 
-This section introduces turbine generators and classifies them by physical form. The design-constraint framework and all experimental characterization follow in §4.
+This section covers what generators exist and how they work. Bench testing and selection rules come in §4.
 
 ### 3.1 Goals & Operating Range
 
-Many under-sink or inline applications need IoT capability but have no wired power. The goal is to generate usable electrical power from water flow at **0.5-1.0 GPM**, well below where most off-the-shelf generators are optimized.
-
-Generators can optionally double as flow sensors since their output frequency and power output are both proportional to flow rate. This is covered in §4.5.
+The goal is to generate usable electrical power from water flow anywhere in the 0 to 4 GPM band, with particular attention to ultra-low flow (0 to 1 GPM) where most off-the-shelf generators struggle. Generators can also double as flow sensors since output frequency and power both scale with flow rate (covered in §6).
 
 ### 3.2 Magnet Magnetization
 
-All rotating magnets in these generators must be **diametrically magnetized**: N/S poles on opposite sides of the magnet, perpendicular to the axis of rotation. As the magnet spins, the field alternates between N and S, inducing voltage. An axially magnetized magnet spinning on its own axis presents a constant field to a symmetric coil, producing no change in flux and no induced voltage. This is not a design variable; all generators in this catalogue use diametric magnetization.
+All rotor magnets must be **diametrically magnetized** (N/S poles on opposite sides, perpendicular to the spin axis). As the magnet spins, the field alternates and induces voltage in the stator coils. An axially magnetized magnet spinning on its own axis produces no flux change and no voltage. This is not a design variable; all generators in this catalogue use diametric magnetization.
+
+For low-flow turbines the stator usually surrounds the rotor; partial-admission designs sometimes invert this with the rotor outside the stator.
 
 ### 3.3 Admission Types
 
-Both full and partial admission use a directed jet of water to spin the rotor, but differ significantly in geometry and performance:
+Both full and partial admission use a directed jet, but differ in geometry and performance:
 
 | Type | Description | Key Characteristic |
 |---|---|---|
-| **Full Admission** | Tight-tolerance nozzle directs a jet around the entire rotor circumference; all blades in flow at all times | Lower startup flow, higher $\Delta P$, precise machining required |
-| **Partial Admission** | Simpler, smaller inlet hole; jet hits only a portion of the rotor at any moment | Higher startup flow, lower $\Delta P$, simpler geometry |
+| **Full Admission** | Tight-tolerance nozzle directs jet around entire rotor circumference; all blades in flow | Lower startup flow, higher ΔP, precise machining |
+| **Partial Admission** | Simpler, smaller inlet hole; jet hits only part of rotor at a time | Higher startup flow, lower ΔP, simpler geometry |
 
-Full admission generators can start generating at lower flow rates, critical for the 0.5 GPM target. Partial admission hub generators sit outside the direct flow path and require a cage or nozzle structure to redirect the jet onto the blades.
+Full admission generators can start generating at lower flow rates (critical for ultra-low-flow targets) because of a stronger jet and/or lighter rotor.
 
 ### 3.4 Coil Configurations & Flux Types
 
@@ -146,281 +150,156 @@ Full admission generators can start generating at lower flow rates, critical for
 
 | | Axial Flux | Radial Flux |
 |---|---|---|
-| **Flux vs rotation axis** | Parallel (flux lines run along the axis of rotation) | Perpendicular (flux lines run across the axis of rotation) |
+| **Flux vs rotation axis** | Parallel (along spin axis) | Perpendicular (across spin axis) |
 | **Typical coil shape** | Pancake (claw pole) or wrapped cylinder (belt) | Small rings pointing inward, or ring-in-ring |
-| **Flux guides needed?** | Yes, always required for both claw pole and belt variants | Typically no (spoke/gyro) |
-| **Cycles per revolution** | Equal to the number of magnet pole pairs, matched by the number of claw-pole pairs in the flux guide | Equal to the number of magnet pole pairs |
+| **Flux guides needed?** | Yes, always | Typically no |
+| **Cycles per revolution** | Magnet pole pairs × claw-pole pairs | Magnet pole pairs |
 
 #### Coil Configurations
 
-| Our Name | Literature Name | Flux Type | Description | Example |
+| Our Name | Literature Name | Flux | Description | Example |
 |---|---|---|---|---|
-| **Claw pole** | Claw pole | Axial | Pancake coil above a cage of soft-iron claw legs that funnel flux from the spinning magnet through the coil. The number of claw poles sets the AC frequency per revolution. | Zurn P6900 |
-| **Belt** | Axial flux wrapped | Axial | Coil wraps around the rotor cylinder, enclosing the magnet. Best flux coupling of the axial types. | Toto EcoPower insert, Toto 10s Dynamo (EDV462/EDV561) |
-| **Spoke** | Hub generator | Radial | Multiple small coils facing inward; magnet ring spins outside them (outrunner). | F50 |
-| **Gyro** | Radial flux ring | Radial | Ring spinning inside another ring. Streamlined for in-pipe mounting. | M6 axial propeller |
+| **Claw pole** | Claw pole | Axial | Pancake coil above soft-iron claws that funnel flux through the coil | Zurn P6900 |
+| **Belt** | Axial flux wrapped | Axial | Coil wraps around rotor cylinder, enclosing the magnet. Best flux coupling of the axial types | Toto EcoPower, Toto 10s Dynamo (EDV462/EDV561) |
+| **Spoke** | Hub generator | Radial | Multiple small coils facing inward; magnet ring spins outside (outrunner) | F50 |
+| **Gyro** | Radial flux ring | Radial | Ring inside another ring; streamlined for in-pipe mounting | M6 axial propeller |
 
 #### Belt Sub-Categories
 
-- **Single coil:** One electrical circuit, two wires. e.g., Toto EcoPower insert.
-- **Dual coil:** Two independent circuits, four wires. One coil is dedicated to always-on critical functions (solenoid valve, MCU); the other powers secondary functions (display, radio) that can be shed when insufficient power is being generated. The Toto 10s Dynamo (EDV462/EDV561) uses this design with a high-inductance secondary coil. Toto advertises that just 10 seconds of water flow generates enough stored energy to fully initialize the electronics, with the inductance sustaining power briefly after flow stops to ensure clean valve closure and final sensor reads. The tradeoff is that high inductance increases braking on the rotor.
+- **Single coil:** one electrical circuit, two wires (e.g., Toto EcoPower).
+- **Dual coil:** two independent circuits, four wires. One coil dedicated to always-on critical functions (solenoid, MCU); the other powers shed-able functions (display, radio). The Toto 10s Dynamo uses this with a high-inductance secondary coil. Toto advertises that 10 seconds of flow fully initializes the electronics and sustains power briefly after flow stops for clean valve closure. Tradeoff: high inductance increases rotor braking.
 
-#### Three-Phase (Spoke/Hub)
+#### Three-Phase (Spoke / Hub)
 
-Six diodes in hub generators confirm 3-phase generation (3-phase bridge rectifier). Benefits over single phase: smoother and more continuous power delivery, even rotor braking. Reduced DC ripple is useful for stable power delivery but a disadvantage if ripple frequency is being used to infer rotor RPM. In that case a single-phase or unfiltered output is preferable (see §4.5).
-
-> **Note on coupling:** The real-world flux linkage between magnet and coil depends on geometry, air gap, material permeability, and other factors that are difficult to measure directly without a gaussmeter. For comparative analysis between turbines, this is treated as a lumped experimental parameter derived from open-circuit testing rather than calculated from first principles.
+Spoke designs use 3n non-overlapping coils like a motor. Six diodes confirm 3-phase generation (3-phase bridge rectifier). Smoother power delivery and even braking, but reduced ripple is a disadvantage if ripple frequency is being used to infer RPM (see §6.3).
 
 ### 3.5 Physics: Power Generation
 
+#### Induced EMF
+
+The peak induced EMF in a rotating coil is
+
+$$\varepsilon_{peak} = N B A \omega$$
+
+where $N$ is the number of coil turns, $B$ is the magnet field strength, $A$ is the coil area, and $\omega$ is the rotor angular velocity. The same $NBA$ product also sets the magnetic braking torque on the rotor, which is why every variable that increases output voltage also increases electromagnetic braking. Two levers help without that penalty:
+
+- **Thicker wire (lower $R_{coil}$):** less power dissipated as heat internally, more delivered to the load.
+- **More water pressure:** more torque to overcome braking. Pure energy input.
+
 #### What Drives Output Power
 
-At a fixed load resistance, the voltage induced in the coil depends on coil turns ($N$), magnet strength ($B$), coil area ($A$), and rotor angular velocity ($\omega$). In the **linear regime** (moderate $\omega$, no magnetic saturation, rotor not yet braking-limited) output power scales with $V^2$ and therefore approximately with $\omega^2$ and $Q^2$. At higher flow rates this breaks down: voltage flattens as electromagnetic braking, bearing drag, and rotor hydrodynamic losses grow faster than available torque, so power rises sub-quadratically and eventually asymptotes.
+In the **linear region** (moderate $\omega$, no magnetic saturation, rotor not yet braking-limited) output power scales with $V^2$ and therefore approximately with $\omega^2$ and $Q^2$. At higher flow rates this breaks down: voltage flattens as electromagnetic braking, bearing drag, and hydrodynamic losses outpace available torque, so power rises sub-quadratically and asymptotes.
 
-Increasing any of $N$, $B$, $A$, $\omega$ increases both output voltage and electromagnetic braking on the rotor. Of those four variables, each increases output and braking together. Two separate levers help without a direct braking penalty:
+#### Why Each Generator Has a Sweet Spot
 
-- **Thicker wire (lower $R_{coil}$):** Lowers coil resistance without changing magnetic coupling. Less power dissipated internally as heat; more delivered to the load.
-- **More water pressure:** Increases torque available to overcome braking. Pure energy input.
-
-#### Why Each Generator Has a Power Sweet Spot
-
-At very low flow rates, friction and bearing losses consume a disproportionate share of the available hydraulic power, and electrical output is low. As flow increases, output power rises. Electromagnetic braking also rises with rotor speed, and at high flow rates the braking torque becomes significant enough that additional water energy is increasingly lost rather than converted. Efficiency therefore peaks at an intermediate flow rate, the turbine's natural sweet spot.
-
-This sweet spot is turbine-specific and determined experimentally. Some turbines, particularly the axial propeller type, show no interior sweet spot: efficiency decreases monotonically from the lowest tested flow rate, meaning the lowest flow rate is always the most efficient operating point. Both cases are handled by the load-strategy framework in §4.3.
+At very low flow, friction and bearing losses consume most of the available hydraulic power. As flow increases, output rises. Electromagnetic braking also rises with rotor speed, and at high flow the braking torque becomes significant enough that additional water energy is increasingly wasted. **For most turbines, efficiency therefore peaks at an intermediate flow rate** (the turbine's natural sweet spot). Some turbines, notably axial propellers like the M6, show no interior peak and are simply most efficient at the lowest flow they can support. §4 turns this distinction into the $R_{eff}$ / $R_{max}$ selection rule.
 
 #### Pressure vs. Flow Rate
 
 $$P_{hydraulic} = \Delta P \cdot Q$$
 
-Pressure ($\Delta P$) provides torque; flow rate ($Q$) provides rotor speed. Both are needed. A high-pressure, zero-flow system produces no power, and a high-flow, zero-pressure system produces no power. At a fixed load, output power rises with both but is ultimately bounded by the rotor's mechanical limits at high flow rates.
+ΔP provides torque; $Q$ provides rotor speed. Both are needed. Output power rises with both at a fixed load but is bounded by the rotor's mechanical limits.
 
 #### Efficiency
 
 $$\eta = \frac{P_{electrical}}{P_{hydraulic}} = \frac{P_{load}}{\Delta P \cdot Q}$$
 
-> Convert GPM to m³/s and PSI to Pa for SI unit consistency.
+Since neither term is linear with flow, the efficiency sweet spot is not predictable from geometry alone, hence the bench testing in §4.
 
 ### 3.6 Classification System & Family Tree
 
-Turbine generators are classified by rotor orientation, admission type, flux direction, and coil configuration. **These axes are independent.** An axial rotor could theoretically pair with axial flux coils, though no commercial example in this scope has been found.
+Turbines are classified by **rotor orientation × admission × flux direction × coil configuration**. These axes are largely independent.
 
-#### Rotor Types
+- **Axial rotor (propeller):** spin axis parallel to flow. Always full admission.
+- **Radial rotor:** spin axis perpendicular to flow. Can be full or partial admission.
 
-- **Axial rotor (propeller):** Axis parallel to water flow. Water hits all blades simultaneously. Always full admission.
-- **Radial rotor:** Axis perpendicular to water flow. Can be full or partial admission.
-
-#### Family Tree
-
-
-![[Pasted image 20260423205550.png]]
-
-
+![[Pasted image 20260423205544.png]]
 *Legend: 🟦 rotor type · 🟩 admission · 🟧 flux / coil configuration · 🟨 commercial example*
 
 ---
 
-## 4. Design Constraints & Generator Modification
+## 4. Bench Testing & Load Selection
 
-Classification tells us what candidate devices exist. This section establishes the criteria that govern selection (§4.1), describes the bench procedure that populates those criteria (§4.2), turns the resulting data into a fixed load resistance per turbine (§4.3), walks the full procedure on the Zurn P6900 as a worked example (§4.4), and covers the generator-output types and modifications required to use the generator as a flow sensor (§4.5-§4.7).
+The goal of testing is twofold: (1) characterize each turbine's general flow behavior (usable flow range, $Q_{start}$, ΔP vs. $Q$, and where the efficiency peak sits if there is one), and (2) pick **one fixed load resistor per turbine** so the rest of the design can treat the turbine as a fixed component. A pre-programmed dynamic load (a small lookup table of resistors switched by flow rate) is a viable alternative that adds a few dollars in BOM and is worth considering for turbines whose optimal $R$ shifts a lot across the operating range; see §4.2 for the comparison and §5.1 Step 2 for a worked example showing how much benefit it actually buys.
 
-### 4.1 Completing Criteria for Rotary Flowsense Selection
+> Detailed test rig, procedures, and per-turbine raw data are maintained in a separate **Flow Sensing & Power Generation, Testing & Characterization** document.
 
-To select a device for a given product, two time-varying profiles and a set of constraint inputs must be matched against the device's measured capabilities.
+### 4.1 What Gets Measured
 
-**Governing profiles:**
+**Per turbine, once:**
 
-- **Power demand over time.** How much power does the product need, and when? Always-on, only during flow, or bursty (radio transmit)?
-- **Flow over time.** How much water passes through, and when? Continuous, intermittent, or dormant for long periods?
+- $R_{coil}$, DC coil resistance
+- Teardown geometry: coil ID/OD, pole/claw count, wire gauge. Number of turns $N$ is **estimated** from coil cross-section, wire gauge, and a packing-factor assumption rather than measured directly (counting turns destructively is impractical and not very accurate).
 
-**Constraint inputs:** pressure budget, price budget, sensing accuracy, physical envelope, and any application-specific requirements (NSF, PID compliance, fitting type, sealed housing).
+**Per flow rate $Q$, swept 0 to 4 GPM:**
 
-**Shortcut for simple cases.** If the product allows a wired supply or a replaceable battery, the answer is a GEMS 238600 paired with an Allegro A1220 (wired) or A1171 (battery) Hall sensor. The framework below applies to the harder case of sealed, long-life, or self-powered deployments, though it handles the simple cases as well.
+- ΔP under load
+- $Q_{start}$, the minimum flow producing any open-circuit voltage
+- ΔP$_{oc}$ at open circuit (optional, see note below)
+- Full $R_{load}$ sweep, recording $V_{load}$, current, AC frequency $f$, and computed power and efficiency
 
-#### Five Output Configurations
+> **On ΔP$_{oc}$:** open-circuit ΔP vs. $Q$ characterizes the purely hydraulic loss with no electromagnetic braking. Because measured efficiencies are typically under 10% (often under 5%), the electromagnetic component is a small fraction of the total ΔP, and ΔP$_{oc}$ is usually within a few percent of ΔP under load. It's a sanity check, not a critical measurement, and can be skipped on turbines where bench time is limited.
 
-Every rotary flowsense decision resolves to one of the following:
+> $B$ (magnet field) and $L$ (inductance) are not directly measurable with current equipment; flux coupling is treated as a single lumped experimental constant from the open-circuit sweep.
 
-| # | Configuration | Sensing | Power | Handles Zero Flow | Handles Ultra-Low Flow | Appendix Fields Queried |
-|---|---|---|---|---|---|---|
-| 1 | Flow meter + battery | Dedicated meter (GEMS + A1171 or A1220) | Battery (or wired) | Yes (sleep) | **Ultra-low** (GEMS min ≈ 0.08 GPM) | App. B: min flow, active/sleep power |
-| 2 | Turbine alone | None | Turbine output | No | **None** (regulated turbine) | App. C: min flow, $R_{eff}$ or $R_{max}$, peak power |
-| 3 | Turbine as sensor | Power at fixed load, or AC / ripple frequency | Turbine output | No | **Medium** (turbine as sensor, limited by loaded $Q_{start}$) | App. C: $R_{eff}$, peak power, $\Delta P$ profile |
-| 4 | Turbine + internal Hall | Internal Hall pulses (load-independent) | Turbine output + small battery | Yes (battery) | **Low\*** (turbine with Hall, open-circuit sensing; additional testing required per turbine) | App. C: min flow, $Q_{start}$, peak power |
-| 5 | Paired meter + turbine + battery | Dedicated meter | Turbine + battery trickle-charge | Yes (battery) | **Ultra-low** (meter sets the floor) | App. B + App. C |
+> Regulated-DC units (e.g., Zurn P6900) are tested by tapping the raw coil leads upstream of the internal regulator.
 
-*\*Configuration 4 pushes minimum detectable flow below the turbine's loaded $Q_{start}$, but exactly how low depends on bearing drag, magnetic detent, and rotor inertia at the Hall sensor's threshold. This must be measured per turbine as part of the bench procedure in §4.2.*
+### 4.2 The $R_{eff}$ / $R_{max}$ Rule
 
-#### Two Cross-Cutting Robustness Requirements
-
-Every configuration must be evaluated against two failure modes:
-
-- **Zero-flow events.** No water moving. The system must remain responsive (wake-on-flow) without draining the battery or losing state. Addressed by sleep mode (§5.3) and a low-power wake comparator.
-- **Ultra-low-flow / insufficient-power events.** Flow is present but below the turbine's usable threshold. The generator produces voltage but not enough to run the load. Addressed by open-circuit sensing mode (§4.7) and stored-energy buffering (§5.2).
-
-Configurations 1, 4, and 5 handle both modes. Configurations 2 and 3 fail silently during either mode and are only appropriate where continuous minimum flow is guaranteed.
-
-### 4.2 Testing & Experimental Procedure
-
-The procedure below is run once per turbine and produces the raw data that populates Appendix C, feeds the load-strategy selection in §4.3, and ultimately enables the selection algorithm in §6.
-
-#### Test Rig Setup
-
-1. Set target flow rate ($Q$)
-2. Measure $\Delta P$ across the device
-3. With the coil leads open (no load), sweep flow up from zero and record the minimum $Q$ at which any non-zero voltage appears across the open circuit. The voltage magnitude is not important, only that it is readable; a non-zero reading confirms the rotor has started spinning. Also record $\Delta P$ vs. $Q$ with no load as the hydraulic-only baseline.
-4. Measure $R_{coil}$ (done once per turbine)
-5. Connect variable resistor; sweep full range at each $Q$, recording $V_{load}$, current, frequency
-6. Calculate efficiency at each $(Q, R)$ point
-7. Step up flow rate and repeat from 0-4 GPM
-
-> **Note on regulated-DC units:** Turbines with built-in regulators (e.g., Zurn P6900) are tested by opening the housing, disconnecting the internal battery and regulator, and tapping the two raw coil leads directly. The regulator flattens flow-dependent information and cannot be characterized by an external R-sweep. For off-the-shelf use the built-in regulator is the product; for benchtop characterization the raw coil output is what gets swept.
-
-#### Measurements Per Flow Rate
-
-| Measurement | Symbol | Notes |
-|---|---|---|
-| Flow rate | $Q$ (GPM) | Set value |
-| Differential pressure (loaded) | $\Delta P$ | Across the device under a connected load |
-| Differential pressure (open circuit) | $\Delta P_{oc}$ | Across the device with coil leads open; hydraulic-only baseline |
-| Minimum startup flow (open circuit) | $Q_{start}$ | Lowest $Q$ at which any non-zero voltage appears across the open circuit |
-| Coil resistance | $R_{coil}$ | DC, measured once per turbine |
-| Load resistance (swept) | $R_{load}$ | Full range at each $Q$ |
-| Voltage at each $R_{load}$ | $V_{load}$ | Measured across the load |
-| Power at each $R_{load}$ | $P$ | Calculated: $V^2/R_{load}$ |
-| Efficiency at each $R_{load}$ | $\eta$ | Calculated: $(V^2/R_{load}) / (\Delta P \cdot Q)$ |
-| AC frequency | $f$ | Proportional to flow rate; usable for sensing (see §4.5) |
-
-#### Why Open-Circuit Testing Matters
-
-The open-circuit sweep establishes the absolute minimum flow at which the rotor will spin with zero electromagnetic braking. This is the floor for open-circuit sensing mode (§4.7), where the load is disconnected and the system runs on a small battery to read rotor pulses at very low flow. Whatever minimum flow the turbine achieves under load, it will achieve a lower minimum with the load removed. That delta is the reason open-circuit sensing is worth the extra MOSFET and battery.
-
-#### Experimental Isolation Procedure
-
-| Step | What | Method | Variables Isolated |
-|---|---|---|---|
-| **1. Teardown** | Direct measurement | Count turns/poles, measure with multimeter/calipers | $N$, $A$, $r$, $R_{coil}$, coil geometry |
-| **2. Open circuit** | No load | Measure frequency and $\Delta P_{oc}$ at several $Q$ points | lumped flux coupling, friction/efficiency ratios |
-| **3. Loaded** | Known $R_{load}$ connected | Measure $V_{load}$, $I$, $\omega$; back-calculate | $\eta_{turbine}$ |
-| **4. Post-processing** | Separate ratios using $\eta_{turbine}$ | Compute from step 2 and step 3 data; subtract known losses to isolate remaining friction terms | $c_f$ (viscous friction), $\tau_0$ (static friction) |
-
-**Can measure directly:** $R_{coil}$, wire gauge, pole/claw count, coil ID/OD, rotor type, admission type, flux type.
-
-**Cannot currently measure:** $B$ (no gaussmeter), $L$ (LH meter TBD). Since $B$ cannot be measured directly, the flux coupling is treated as a single lumped experimental constant.
-
-#### Interpolating Between Tested Resistances (Optional)
-
-All reported $R_{eff}$, $Q_{eff}$, $R_{max}$ values and all Cost/Reward charts use measured $(R, V, Q, \Delta P)$ points directly with no extrapolation. In principle, a Thevenin source model
-
-$$V_{load} = V_{source} \cdot \frac{R_{load}}{R_{source} + R_{load}}$$
-
-fit to a few measured points per flow rate could predict $V$ at untested resistances. In practice, finding $R_{eff}$ requires a dense R-sweep at multiple $Q$ anyway to locate the efficiency peak, so the model provides no testing shortcut. It would only be useful for generating smooth visual curves after the fact. Measured points are sufficient for all selection decisions.
-
-### 4.3 Load Strategies
-
-Once the bench data is in, the next question is what resistor to connect to the coil in the product. This is an experimental decision that cannot be predicted from geometry alone because it depends on coil impedance, rotor drag, and magnetic coupling that cannot all be measured directly (see §4.2). The R-sweep at each flow rate produces a family of efficiency and power curves, and the load-strategy framework below converts those curves into one fixed resistor value per turbine.
-
-Picking the flow rate that produces the most raw power is tempting but wrong. Raw power keeps climbing well past the point where $\Delta P$ has blown through any realistic pressure budget, and voltage flattens as the rotor approaches its electromagnetic limit, meaning additional water energy yields diminishing electrical returns. The useful operating point is the one that balances power out against hydraulic cost: the efficiency peak.
-
-#### Key Terms
+Picking the resistance that produces the most raw power at a single flow rate is tempting but wrong: that resistance is only optimal at that one flow rate, and at other flow rates within the operating range it gives up significant output. The useful choice is the resistance that balances power output against hydraulic cost across the **whole expected range of flow**, which corresponds to the efficiency peak.
 
 | Symbol | Name | Definition |
 |---|---|---|
-| **$R_{eff}$** | Peak-efficiency resistance | Single fixed resistance at which the turbine achieves greatest efficiency across all tested flow rates. One value per turbine. |
-| **$Q_{eff}$** | Peak-efficiency flow rate | Flow rate at which that greatest efficiency occurs. The turbine's natural sweet spot. |
-| **$R_{max}$** | Asymptotic optimal resistance | Applies only when minimum tested flow rate is also the most efficient (no interior sweet spot). The asymptote approached by optimal $R$ as $Q$ increases. Used as the fixed load for these turbines. |
+| **$R_{eff}$** | Peak-efficiency resistance | Single fixed $R$ at which the turbine reaches greatest efficiency across all tested flow rates |
+| **$Q_{eff}$** | Peak-efficiency flow rate | Flow rate at which that occurs, the turbine's natural sweet spot |
+| **$R_{max}$** | Asymptotic optimal resistance | Used when the minimum tested flow is also the most efficient (no interior sweet spot). The asymptote that optimal $R$ approaches as $Q$ increases |
 
-#### Selection Procedure
+#### Procedure
 
-**Step 1. Open-circuit baseline.** With the coil leads open, sweep flow up from zero and record (a) $Q_{start}$, the minimum flow at which any non-zero voltage appears across the open circuit, and (b) $\Delta P_{oc}$ vs. $Q$, the hydraulic-only baseline with no electromagnetic braking.
+1. **Measure $R_{coil}$** with a multimeter. Optimal load will be higher than $R_{coil}$ because of inductive reactance ($\omega L$). True optimum is found in step 3.
+2. **Open-circuit baseline.** Sweep flow from zero with leads open; record $Q_{start}$ and (optionally) ΔP$_{oc}$ vs. $Q$.
+3. **Efficiency sweep.** At each $Q$, sweep $R_{load}$ and compute $\eta = (V_{load}^2 / R_{load}) / (\Delta P \cdot Q)$. One curve per flow rate.
+4. **Identify the peak.**
+   - **Interior sweet spot found:** that ($R$, $Q$) is ($R_{eff}$, $Q_{eff}$). Use $R_{eff}$ as the fixed load.
+   - **Min flow rate is most efficient:** plot optimal $R$ vs. $Q$; it asymptotes to $R_{max}$. Use $R_{max}$ as the fixed load. Operating point is then driven by pressure budget or power need.
 
-**Step 2. Measure internal resistance.** Measure $R_{coil}$ with a multimeter. The experimentally optimal load will typically be higher than $R_{coil}$ because the coil's AC source impedance includes inductive reactance ($\omega L$) in addition to $R_{coil}$. The true optimum is determined by the sweep in Step 3, not by a simple DC impedance-matching rule.
+**Sanity check:** the power-vs-flow curve should begin to flatten near $Q_{eff}$, the same electromagnetic saturation that makes high-flow operation wasteful.
 
-**Step 3. Efficiency vs. resistance sweep.** At each flow rate $Q$, sweep load resistance and calculate:
-
-$$\eta = \frac{V_{load}^2 / R_{load}}{\Delta P \cdot Q}$$
-
-This produces a family of curves, one per flow rate, plotted on the same axes.
-
-**Step 4. Identify $R_{eff}$ and $Q_{eff}$ (or $R_{max}$).** Find the single point of greatest efficiency across all $(Q, R)$ combinations.
-
-- **Interior sweet spot found:** that resistance and flow rate are $R_{eff}$ and $Q_{eff}$. Use $R_{eff}$ as the fixed load.
-- **Minimum flow rate is always most efficient:** no interior sweet spot. Plot optimal $R$ vs. $Q$; the curve approaches an asymptote, $R_{max}$. Use $R_{max}$ as the fixed load. Selection is then driven by pressure budget or power need.
-
-**Sanity check.** The voltage vs. flow curve should begin to flatten at or near $Q_{eff}$. This is the same electromagnetic saturation behavior that makes operation at higher flow rates wasteful, and serves as an independent confirmation of the efficiency-based peak.
-
-**Flatness observation.** Changing load resistance within a reasonable range around the optimum typically produces only modest changes in power and efficiency. A well-chosen fixed load captures nearly all the available benefit without the cost and complexity of a real-time dynamic system, though this should be verified per turbine as data becomes available.
+**Flatness observation:** $R$ within a reasonable range around the optimum produces only modest changes in power and efficiency. A well-chosen fixed load captures nearly all the available benefit (verified per-turbine in §5).
 
 #### Fixed Load Selection Rule
 
 | Turbine Type | Fixed Load | Notes |
 |---|---|---|
-| Has interior $Q_{eff}$ | **$R_{eff}$** | Best efficiency at the turbine's natural sweet spot |
-| Min flow = $Q_{eff}$ | **$R_{max}$** | No single optimal flow rate; selection by pressure budget or power need |
-
-#### Worked Example: M6 Axial Propeller (the $R_{max}$ Case)
-
-The M6 axial propeller illustrates the second branch of the rule. Full R-sweep at seven flow rates (0.60-3.50 GPM, $R_{coil} = 161.6\ \Omega$) shows **no interior efficiency peak**. Efficiency is highest at the lowest tested flow rate and decreases monotonically as $Q$ rises, which is characteristic of axial-propeller geometry.
-
-```mermaid
----
-config:
-  themeVariables:
-    xyChart:
-      plotColorPalette: "#43A047"
----
-xychart-beta
-  title "M6 Peak Efficiency vs Flow Rate"
-  x-axis "Flow Rate (GPM)" 0.60 --> 3.50
-  y-axis "Peak Efficiency (%)" 0.6 --> 1.3
-  line [1.24, 1.12, 0.90, 0.81, 0.74, 0.67, 0.64]
-```
-
-*Peak efficiency at each tested flow rate; $R_{coil} = 161.6\ \Omega$.*
-
-Because no single flow rate is best, the load is chosen by looking at the optimal resistance at each $Q$. Optimal $R$ decreases with increasing $Q$ and approaches an asymptote near $275\ \Omega$.
-
-```mermaid
----
-config:
-  themeVariables:
-    xyChart:
-      plotColorPalette: "#8E24AA"
----
-xychart-beta
-  title "M6 Optimal Load Resistance vs Flow Rate"
-  x-axis "Flow Rate (GPM)" 0.60 --> 3.50
-  y-axis "Optimal R (Ω)" 250 --> 650
-  line [625, 500, 450, 400, 350, 275, 275]
-```
-
-*Optimal load resistance at each tested flow rate; asymptote at $R_{max} \approx 275\ \Omega$.*
-
-$R_{max} \approx 275\ \Omega$ is the fixed load selected for the M6. Because peak efficiency occurs at the low-flow end of the range, final operating-point selection is driven by the pressure budget and power need for the target application rather than by a single sweet-spot flow rate. M6 peak power ranges from ~3 mW at 0.60 GPM ($\Delta P \approx 1$ PSI) to ~490 mW at 3.50 GPM ($\Delta P \approx 50$ PSI), with efficiency steadily degrading across that range.
-
-**Contrast with Zurn P6900 (§4.4):** the Zurn has a clear interior $Q_{eff}$ at 0.33 GPM and uses a single $R_{eff}$. The M6 has no interior peak and uses an $R_{max}$ asymptote. These two turbines demonstrate both branches of the selection rule in practice.
+| Has interior $Q_{eff}$ | **$R_{eff}$** | Best efficiency at the natural sweet spot |
+| Min flow = $Q_{eff}$ | **$R_{max}$** | Selected by pressure budget or power need |
 
 #### Pre-Programmed Dynamic Load (Optional)
 
-A lookup table indexed by flow rate can switch between a small set of resistors, populated from bench test data and not real-time. Adds ~$2-5 BOM. Only worth considering when the operating range spans >3:1 flow ratio and optimal $R$ shifts dramatically across that range. For most 0-4 GPM applications, a fixed $R_{eff}$ or $R_{max}$ is preferred.
+A lookup table indexed by flow rate can switch between a small set of resistors, populated from bench data (not real-time tracking). Adds ~$ 2 to $ 5 BOM. Worth considering when the operating range has a large span or if the optimal $R$ shifts dramatically across its range. For most 0 to 4 GPM applications, a fixed $R_{eff}$ or $R_{max}$ captures the large majority of the available benefit, as shown in §5.1 Step 2.
 
-#### Standard Output Charts Per Turbine
+### 4.3 Standard Output: Cost / Reward Chart
 
-Once the fixed load is chosen, each turbine is characterized by two summary quantities plotted together on a single **normalized Cost/Reward chart**:
+Once the fixed load is chosen, each turbine is summarized by a **normalized Cost / Reward chart**:
 
-- **Cost:** $\Delta P$ vs. $Q$, the hydraulic cost imposed on the system
-- **Reward:** Power vs. $Q$, the electrical output at the chosen fixed load
+- **Cost:** ΔP vs. $Q$ (hydraulic cost imposed on the system)
+- **Reward:** Power vs. $Q$ at the chosen fixed load (electrical output)
 
-Both are expressed as percent of their respective turbine-specific maximum, so they share a single axis. Conversion factors back to engineering units are given per-turbine in the caption. §4.4 shows the full workflow applied to the Zurn P6900.
+Both are expressed as percent of their turbine-specific maximum, so they share one axis. Conversion factors back to engineering units are given per-turbine in the caption.
 
-### 4.4 Test Results: Zurn P6900 Demo
+---
 
-The Zurn P6900 is the primary demonstration unit with complete bench data including full flow rate sweep and full resistance sweep at each flow rate. The unit is natively regulated DC; these results were taken with the battery and regulator disconnected, tapping the two raw coil leads directly (see §4.2 note). It serves as a concept demonstrator (good operating range, clean $\Delta P$ vs $Q$ curvature, clear interior $Q_{eff}$), not a product recommendation. This is the $R_{eff}$ / $Q_{eff}$ branch of the selection rule; for the contrasting $R_{max}$ case, refer to the M6 worked example in §4.3. All other turbines in Appendix C will follow this same format as data becomes available.
+## 5. Test Results
 
-Measured coil resistance: $R_{coil} = 3.6\ \Omega$.
+Two units demonstrate both branches of the selection rule.
 
-#### Step 1: Efficiency vs. Load Resistance (Finding $R_{eff}$ and $Q_{eff}$)
+### 5.1 Zurn P6900, Interior Sweet Spot ($R_{eff}$ Case)
 
-The efficiency sweep produces one curve per flow rate. The global peak across all $(Q, R)$ combinations identifies $R_{eff}$ and $Q_{eff}$.
+Primary demonstration unit with complete bench data (full $Q$-sweep × full $R$-sweep). Natively regulated DC; results below were taken with battery and regulator disconnected, tapping the raw coil leads. Concept demonstrator (clean ΔP curvature, clear interior $Q_{eff}$), not a product recommendation.
+
+**Measured:** $R_{coil}$ = 3.6 Ω.
+
+#### Step 1: Efficiency vs. Load Resistance
 
 ```mermaid
 ---
@@ -430,7 +309,7 @@ config:
       plotColorPalette: "#1E88E5, #E53935, #000000, #FB8C00, #8E24AA, #43A047"
 ---
 xychart-beta
-  title "Chart C. Efficiency vs Load Resistance (Zurn P6900)"
+  title "Efficiency vs Load Resistance (Zurn P6900)"
   x-axis "Load Resistance (Ω)" 10 --> 200
   y-axis "Efficiency (%)" 0 --> 8.5
   line [0.80, 1.42, 2.04, 2.33, 2.41, 2.45, 2.20]
@@ -452,56 +331,11 @@ xychart-beta
 | 🟪 | 0.50 GPM | 5.9% |
 | 🟩 | 0.67 GPM | 3.3% |
 
-The global maximum sits on the $Q = 0.33$ GPM curve at $R = 40\ \Omega$, with $\eta \approx 8.0\%$. No higher efficiency is reached at any other flow rate or resistance in the tested range.
+The global maximum is on the $Q$ = 0.33 GPM curve at $R$ = 80 Ω, $\eta \approx$ 8.0%. **$R_{eff}$ = 80 Ω, $Q_{eff}$ = 0.33 GPM.** Notice the flatness around 80 Ω: small $R$ changes produce only marginal returns.
 
-#### Step 2: Power vs. Load Resistance (Confirming Flatness)
+#### Step 2: Static $R_{eff}$ vs. Dynamic Optimal $R$
 
-Plotting power at the same $(Q, R)$ grid confirms that the optimum is broad. Small deviations from $R_{eff}$ produce only modest power changes, supporting the use of a single fixed resistor rather than a dynamic load.
-
-```mermaid
----
-config:
-  themeVariables:
-    xyChart:
-      plotColorPalette: "#1E88E5, #E53935, #000000, #FB8C00, #8E24AA, #43A047"
----
-xychart-beta
-  title "Chart D. Power vs Load Resistance (Zurn P6900, all Q)"
-  x-axis "Load Resistance (Ω)" 10 --> 200
-  y-axis "Power (mW)" 0 --> 370
-  line [1.5, 2.7, 3.8, 4.4, 4.5, 4.6, 4.1]
-  line [16.6, 25.0, 33.4, 37.0, 38.3, 38.1, 31.6]
-  line [109.2, 122.0, 130.4, 129.3, 122.9, 117.6, 88.2]
-  line [114.5, 192.1, 260.8, 264.3, 248.6, 230.4, 160.2]
-  line [114.7, 198.0, 300.5, 328.6, 322.6, 305.8, 215.2]
-  line [114.1, 200.4, 317.4, 363.5, 368.6, 355.2, 262.1]
-```
-
-**Legend:**
-
-| | Flow Rate | Peak Power |
-|---|---|---|
-| 🟦 | 0.17 GPM | ~5 mW |
-| 🟥 | 0.25 GPM | ~38 mW |
-| ⬛ | **0.33 GPM ($Q_{eff}$)** | **130 mW** |
-| 🟧 | 0.42 GPM | ~264 mW |
-| 🟪 | 0.50 GPM | ~329 mW |
-| 🟩 | 0.67 GPM | ~369 mW |
-
-Voltage flattening is visible as the sanity check described in §4.3: at $R = 20\ \Omega$, $V$ climbs from 1.96 V at $Q = 0.42$ GPM only to 2.00 V at $Q = 0.67$ GPM despite $\Delta P$ more than doubling. Additional water energy is no longer producing proportional electrical output.
-
-#### Selection
-
-- $R_{eff} = 40\ \Omega$
-- $Q_{eff} \approx 0.33$ GPM
-- Peak efficiency $\eta_{max} \approx 8.0\%$
-- Interior peak confirmed ($R_{max}$ path does not apply)
-
-At $Q = 0.67$ GPM, $\Delta P$ reaches 38.5 PSI, well above a realistic 50 PSI pressure budget once system losses are included, while power has only climbed ~22% over its $Q_{eff}$ value. The efficiency-based $Q_{eff}$ is the correct operating point.
-
-#### Step 3: Power vs. Flow Rate (Static $R_{eff}$ vs. Dynamic Optimal)
-
-With $R_{eff}$ fixed, power vs. flow rate can be plotted and compared against the theoretical ceiling of a continuously-optimized load. The two lines touch at $Q_{eff}$ and separate as $Q$ grows because the optimal $R$ shifts to $60\text{-}80\ \Omega$ at higher flow rates.
+With $R_{eff}$ fixed, power vs. flow can be compared against the theoretical ceiling of a continuously-optimized load. The two lines touch at $Q_{eff}$ and separate as $Q$ grows because the optimal $R$ shifts from 80 Ω toward 100 Ω at higher flow. **The flow range over which the two curves track each other closely is the turbine's effective working range under a fixed load**; outside that band, dynamic load-matching would start to provide meaningful gains.
 
 ```mermaid
 ---
@@ -511,7 +345,7 @@ config:
       plotColorPalette: "#1E88E5, #E53935"
 ---
 xychart-beta
-  title "Chart B. Power vs Flow Rate (Zurn P6900)"
+  title "Power vs Flow Rate (Zurn P6900)"
   x-axis "Flow Rate (GPM)" 0.167 --> 0.667
   y-axis "Power (mW)" 0 --> 370
   line [3.8, 33.4, 130.4, 260.8, 300.5, 317.4]
@@ -522,14 +356,12 @@ xychart-beta
 
 | | Load Strategy |
 |---|---|
-| 🟦 | Static load at $R_{eff} = 40\ \Omega$ |
+| 🟦 | Static load at $R_{eff}$ = 80 Ω |
 | 🟥 | Dynamic optimal $R$ per $Q$ (theoretical max) |
 
-The static-load curve captures the large majority of the theoretical maximum across the full operating range, with the largest gap (~14%) at $Q = 0.67$ GPM where $R$ shifts furthest from $40\ \Omega$. For a fixed-load design the $R_{eff}$ choice is robust.
+The static-load curve captures the large majority of the theoretical maximum across the full operating range, with the largest gap (~14%) at $Q$ = 0.67 GPM, but would continue growing at higher flow rates (limited flow capability on test bench). **For a fixed-load design $R_{eff}$ is robust**; dynamic load chasing isn't worth the BOM and complexity for this margin on the Zurn.
 
-#### Step 4: Normalized Cost / Reward vs. Flow Rate (Summary)
-
-The standard per-turbine summary, with Cost ($\Delta P$) and Reward (electrical power at $R_{eff}$) plotted on a single shared axis. Both are normalized to their respective turbine-specific maxima, so the y-axis is percent-of-max. This allows a single chart with two series instead of a dual y-axis plot.
+#### Step 3: Cost / Reward Summary
 
 ```mermaid
 ---
@@ -539,7 +371,7 @@ config:
       plotColorPalette: "#E53935, #1E88E5"
 ---
 xychart-beta
-  title "Normalized Cost / Reward vs Flow Rate (Zurn P6900, R_eff=40Ω)"
+  title "Normalized Cost / Reward vs Flow Rate (Zurn P6900, R_eff=80Ω)"
   x-axis "Flow Rate (GPM)" 0.167 --> 0.667
   y-axis "Percent of Max (%)" 0 --> 100
   line [6.8, 15.1, 29.4, 48.1, 66.2, 100.0]
@@ -548,248 +380,246 @@ xychart-beta
 
 **Legend:**
 
-| | Series | Conversion to Engineering Units |
+| | Series | Conversion |
 |---|---|---|
-| 🟥 | Cost ($\Delta P$ as % of 38.5 PSI max) | $\Delta P$ [PSI] = cost% $\times$ 0.385 |
-| 🟦 | Reward (Power at $R_{eff}$ as % of 317.4 mW max) | $P$ [mW] = reward% $\times$ 3.174 |
+| 🟥 | Cost (ΔP as % of 38.5 PSI max) | ΔP [PSI] = cost% × 0.385 |
+| 🟦 | Reward (Power at $R_{eff}$ as % of 317.4 mW max) | $P$ [mW] = reward% × 3.174 |
 
-Interpretation: the Reward curve rises steeply through $Q_{eff} = 0.33$ GPM, reaching 41% of its maximum output while Cost is still at only 29% of its maximum. Above $Q_{eff}$ the Reward curve flattens while the Cost curve continues to climb, so the gap between them narrows and eventually inverts. The crossover near $Q = 0.42$ GPM (Cost = 48%, Reward = 82%) marks where additional flow begins buying proportionally less electrical return. This is the visual summary produced for every turbine in Appendix C as bench data becomes available.
+Reward rises steeply through $Q_{eff}$ = 0.33 GPM, hitting 41% of max while Cost is still at 29%. Above $Q_{eff}$, Reward flattens while Cost keeps climbing; the crossover near $Q$ = 0.42 GPM (Cost 48%, Reward 82%) marks where additional flow buys proportionally less electrical return. Lines are suspected to keep diverging at higher flow rates.
 
-### 4.5 Generator Output Types and Sensing Options
+### 5.2 M6 Axial Propeller, Asymptotic Case ($R_{max}$)
 
-A turbine generator can double as a flow sensor because its output is proportional to rotor speed, which is proportional to flow rate. This subsection covers how to extract flow rate from a generator's output and which output types support it.
+Full $R$-sweep at seven flow rates (0.60 to 3.50 GPM, $R_{coil}$ = 161.6 Ω) shows **no interior efficiency peak**. Efficiency is highest at the lowest tested flow and decreases monotonically, characteristic of axial-propeller geometry.
 
-The table below addresses sensing from the electrical output terminals only. A separate internal-Hall option (§4.6 Method 1) works on all three output types but requires physical access to the rotor body; for an off-the-shelf regulated-DC unit this means opening the housing and moving to a custom assembly.
+```mermaid
+---
+config:
+  themeVariables:
+    xyChart:
+      plotColorPalette: "#43A047"
+---
+xychart-beta
+  title "M6 Peak Efficiency vs Flow Rate"
+  x-axis "Flow Rate (GPM)" 0.60 --> 3.50
+  y-axis "Peak Efficiency (%)" 0.6 --> 1.3
+  line [1.24, 1.12, 0.90, 0.81, 0.74, 0.67, 0.64]
+```
 
-| Output Type | Built-in Circuit | Sensing from electrical output? | How |
-|---|---|---|---|
-| **Raw AC** | None | Yes, best option | Frequency counting or power at fixed load |
-| **Unregulated DC** | Diode bridge | Yes | Power proportional to flow at known load; ripple frequency also usable, though heavy filtering kills ripple amplitude |
-| **Regulated DC** | Voltage regulator | No, information lost | Output held constant regardless of flow. Any flow sensing requires an internal Hall sensor (§4.6 Method 1), which means opening the housing. No longer an off-the-shelf part. |
+Because no single flow rate is best, the load is chosen by looking at the optimal $R$ at each $Q$. Optimal $R$ decreases with increasing $Q$ and approaches an asymptote near 275 Ω.
+
+```mermaid
+---
+config:
+  themeVariables:
+    xyChart:
+      plotColorPalette: "#8E24AA"
+---
+xychart-beta
+  title "M6 Optimal Load Resistance vs Flow Rate"
+  x-axis "Flow Rate (GPM)" 0.60 --> 3.50
+  y-axis "Optimal R (Ω)" 250 --> 650
+  line [625, 500, 450, 400, 350, 275, 275]
+```
+
+**$R_{max} \approx$ 275 Ω** is the fixed load selected for the M6. Final operating-point selection is driven by pressure budget and power need rather than a sweet-spot flow rate. M6 peak power ranges from ~3 mW at 0.60 GPM (ΔP ≈ 1 PSI) to ~490 mW at 3.50 GPM (ΔP ≈ 50 PSI), with efficiency steadily degrading.
+
+### 5.3 Side by Side
+
+| | Zurn P6900 | M6 Axial Propeller |
+|---|---|---|
+| Interior $Q_{eff}$? | Yes (0.33 GPM) | No |
+| Fixed load | $R_{eff}$ = 80 Ω | $R_{max} \approx$ 275 Ω |
+| Operating point chosen by | $Q_{eff}$ | Pressure budget / power need |
+| Static-vs-dynamic gap | Negligible inside operating range | n/a (no interior peak) |
+
+These two demonstrate both branches of the selection rule. All other turbines in the catalogue follow the same workflow as bench data becomes available.
+
+---
+
+## 6. Sensing from a Generator
+
+A turbine generator can double as a flow sensor because output is proportional to rotor speed, which is proportional to flow rate (and voltage in certain cases, power less reliably). This section covers how to extract $Q$ from the generator and which output types support which method.
+
+### 6.1 Generator Output Types
+
+| Output Type | Built-in Circuit | Sensing from electrical terminals? |
+|---|---|---|
+| **Raw AC** | None | Yes, best option (frequency or voltage-at-load) |
+| **Unregulated DC** | Diode bridge | Yes, voltage-at-load; ripple frequency also usable |
+| **Regulated DC** | Voltage regulator | **No**, flow info erased at output. Sensing requires opening the housing for an internal Hall (custom assembly only) |
 
 #### Rectification
 
 | Generator Type | Rectification |
 |---|---|
-| Single-coil, 2-wire | Standard bridge rectifier + smoothing cap |
-| 3-phase hub generator | 3-phase full-wave rectifier (6 diodes) |
+| Single-coil, 2-wire | Bridge rectifier + smoothing cap |
+| 3-phase hub generator | 3-phase full-wave (6 diodes) |
 | Dual-coil, 4-wire | Separate rectification per coil, then combine |
 
-### 4.6 Sensing Methods: Priority Order
+### 6.2 Sensing Methods, in Priority Order
+#### 1. Hall sensor inside the turbine body
 
-**1. Hall effect sensor inside the turbine body (preferred where physically possible)**
+Reads the rotor magnet directly, same as a dedicated flow meter (§2). Clean digital pulse train, frequency ∝ RPM, load-independent. With an A1171 (~15 to 42 μW) it's the most power-efficient method and cheaper than any PCB chain (op-amp + comparator + filter + ADC) trying to recover $Q$ from the raw generator output. Preferred where physically possible, and the only option for regulated-DC units (after opening the housing).
 
-A Hall sensor mounted inside the generator housing reads the rotor's magnet directly, the same approach used in dedicated flow meters (§2). It produces a clean digital pulse train whose frequency is proportional to RPM and therefore flow rate, completely independent of the electrical load. The load can be anything (static, dynamic, open, shorted) and the Hall signal stays valid. Combined with an A1171 (~15-42 μW), this is the most power-efficient sensing method and the only viable sensing method for regulated-DC output turbines.
+#### 2. AC or DC ripple frequency
 
-Caveat for regulated-DC off-the-shelf units: adding an internal Hall sensor requires opening the housing and modifying the assembly, so the product is no longer an off-the-shelf part. For sealed regulated-DC generators with a small external field leak, a clip-on external Hall detector can sometimes be used instead, but sensitivity is geometry-dependent and not reliable as a general approach.
+Raw AC zero-crossings or unregulated DC ripple are proportional to $Q$ and load-independent, same as the Hall pulse train. Avoid heavy downstream filtering; it kills ripple amplitude. Useful when the turbine can't fit an internal Hall sensor.
 
-**2. Power at a known static load (secondary)**
+#### 3. Voltage at a fixed load
 
-With a fixed, known load resistance, output power at a constant load scales with flow rate, but only under constant inlet pressure. The $P \propto Q^2$ relationship holds in the linear regime at fixed $\Delta P$. In a real plumbing system, upstream pressure fluctuates with building demand, valve position elsewhere on the line, and time of day, so the same flow rate can produce noticeably different power readings. Voltage, or better yet rotor frequency via a Hall sensor, is the preferred flow proxy because it responds to rotor speed directly and is insensitive to pressure swings that move the operating point along the turbine's power curve without changing $Q$ itself.
+Voltage tracks RPM and is insensitive to inlet pressure (unlike power). Works on raw AC or unregulated DC. Linear at low to moderate $Q$; saturates at high $Q$ and needs a per-turbine lookup table past that point. Better than power-at-load, worse than frequency.
 
-Power-at-fixed-load is cheapest (no additional sensor beyond the load resistor and a voltage measurement) and is acceptable where inlet pressure is known to be stable or where flow accuracy requirements are modest. Not available on regulated-DC output.
+#### 4. Power at a fixed load and pressure
 
-**3. AC frequency or DC ripple frequency (fallback)**
+$P \propto Q^2$ only at constant ΔP. Real plumbing pressure fluctuates with building demand, so the same $Q$ can read differently. Cheapest option (load resistor + voltage measurement) and fine where inlet pressure is stable or accuracy is modest. Not recommended as the primary method when frequency-based options are available.
+### 6.3 Open-Circuit Sensing Mode
 
-Raw AC zero-crossings or unregulated DC ripple frequency are both proportional to flow rate. Requires Raw AC or Unregulated DC output. Heavy downstream filtering should be avoided if using this method, as it reduces ripple amplitude. Valid fallback only if the turbine cannot physically accommodate a Hall sensor.
+With no load ($R_{load} = \infty$), electromagnetic braking is removed and the turbine spins more freely, pushing minimum detectable flow below the loaded $Q_{start}$. Flow is read from AC frequency or a Hall sensor. Requires a MOSFET to disconnect the load and a stored energy source (battery or supercap) to power the sensing circuit during this mode.
 
-### 4.7 Open Circuit Sensing Mode
-
-With no load connected ($R_{load} = \infty$), electromagnetic braking is removed and the turbine spins more freely, pushing the minimum detectable flow rate lower than under load. Flow rate is read from AC frequency or a Hall sensor. This mode requires a MOSFET switch to disconnect the load and a stored energy source (battery or supercapacitor) to power the sensing circuit.
-
-The system can switch dynamically: open circuit at very low flows for maximum sensitivity; closed circuit at higher flows for power generation. See §5.3 for how this fits into the overall operating state model.
+The system can in principle switch dynamically (open-circuit at very low flow for sensitivity, closed-circuit at higher flow for power generation), but the value is unclear in practice: typical efficiencies are under 10% (often under 5%), and disconnecting the load only reduces ΔP by an estimated 5 to 10%. Whether the gain in low-flow sensitivity justifies the added MOSFET, control logic, and stored-energy buffer is **a question for bench validation per turbine**, not a default architecture.
 
 ---
 
-## 5. Hybrid Systems: Generator + Meter + Storage
+## 7. System Architectures
 
-### 5.1 Configuration Options
+### 7.1 Output Configurations
 
-| Option | Sensing | Power | Description |
-|---|---|---|---|
-| **A. Generator only** | Hall sensor on generator rotor | Generator output | Hall sensor reads RPM for flow; generator powers everything. Load choice is independent of sensing. Most flexible. |
-| **B. Generator power sensing** | Power at fixed load | Generator output | Read power at $R_{eff}$ as flow proxy. No separate sensor. Cheapest if a static load is acceptable. |
-| **C. Paired meter + generator + battery** | Dedicated flow meter (e.g., GEMS + A1171) | Generator output + battery | Meter handles sensing; generator handles power; battery bridges zero-flow gaps. Most complete for accuracy. |
+Every rotary flowsense decision resolves to one of the following. "Handles 0-flow events" means the system stays responsive when no water is flowing; "Flow minimum with turbine" is the lowest $Q$ at which the turbine path can sense and/or power the system.
 
-### 5.2 Storage Strategies
+| # | Configuration | Sensing | Power | Handles 0-Flow Events | Flow Minimum |
+|---|---|---|---|---|---|
+| 1 | Flow meter + plug in | Dedicated meter (GEMS + A1220) | Wall Socket | No | Meter sets the floor, ≈ 0.08 GPM |
+| 2 | Flow meter + battery | Dedicated meter (GEMS + A1171) | Battery | Yes (sleep) | Meter sets the floor, ≈ 0.08 GPM |
+| 3 | Generator as sensor | Power at fixed load, or AC / ripple frequency | Turbine output | No | Loaded $Q_{start}$ (or minimum $Q$ to power circuit) |
+| 4 | Generator + internal Hall + cap or battery | Internal Hall (load-independent) | Turbine + small battery | Yes (battery) | Open-circuit $Q_{start}$ (lower than loaded) |
+| 5 | Paired  flow meter + generator + battery | Dedicated meter | Turbine + battery trickle-charge | Yes (battery) | Meter floor (≈ 0.08 GPM) |
 
-| Strategy | Description | Trade-off |
-|---|---|---|
-| Generator only | All power from flow | Fails at zero/very low flow |
-| Generator + supercapacitor | MCU wakes on accumulated charge | Low cost, limited burst energy |
-| Generator + rechargeable battery | Trickle-charge during flow | Best coverage; adds cost |
-| Paired meter + generator + battery (Option C above) | GEMS for sensing; generator for power; battery bridges gaps | Most complete solution |
 
-> **Open question:** At what minimum flow rate can each generator reliably trickle-charge a backup battery?
+### 7.2 Operating States & Sleep
 
-### 5.3 Operating States & Sleep Mode
-
-Both flow sensing and power generation are intermittent. A restroom faucet may run only minutes per day; a bottle-filling station filter may process its entire 2,000-gallon life over months. The distinction between active and sleep states dominates total energy budget.
+The selection of a flowmeter depends heavily not just on the water pressure and flow rate, but the frequency and duration of use. A sink may be used for a few seconds at a time or be unused for an entire day. Measuring a flow rate of 0 takes the same amount of effort measuring any other flow rate, and a turbine can only provide power while its being used. Thus, the active / sleep distinction often dominates total energy budget.
 
 | State | Condition | Power Draw | Power Source |
 |---|---|---|---|
-| **Active. Generating** | Water flowing, load connected | MCU + Hall sensor + radio (5-50 mW typical) | Turbine output; charges battery simultaneously |
-| **Active. Sensing Only** | Water flowing, load open | MCU + Hall sensor only (~0.1-1 mW) | Battery; braking minimized, extending low-flow sensitivity |
-| **Sleep** | No water flow | MCU in deep sleep (~1-100 μW) | Battery only |
+| **Active, generating** | Water flowing, load connected | MCU + Hall + radio (5 to 50 mW typical) | Turbine; charges battery in parallel |
+| **Active, sensing only** | Water flowing, load open | MCU + Hall only (~0.1 to 1 mW) | Battery; braking minimized for low-flow sensitivity |
+| **Sleep** | No flow | MCU deep sleep (~1 to 100 μW) | Battery only |
 
-The system can switch between generating and sensing-only states dynamically based on flow rate. Sensing-Only mode requires a MOSFET load-disconnect; the "Generator only" strategy in §5.2 (no battery) cannot support this state.
+Switching between Generating and Sensing-Only requires a MOSFET load-disconnect and a battery; it is the same architectural question raised in §6.3 and should be validated per turbine before committing to it.
 
-**Wake detection from sleep:**
+**Wake from sleep:**
 
-- **Flow-triggered wake (preferred):** Low-power comparator monitors Hall signal or raw AC at ~1-10 μA quiescent. Detected pulse wakes MCU. Most energy-efficient.
+- **Flow-triggered wake (preferred):** low-power comparator monitors Hall signal or raw AC at ~1 to 10 μA quiescent. A detected pulse wakes the MCU.
 - **Periodic polling:** MCU wakes on a timer and checks for flow. Simpler firmware but wastes energy during long no-flow periods.
 
-**Turbine selection implication:** If the generator requires 0.5 GPM to produce voltage but the application needs to detect flow at 0.1 GPM, a dedicated low-power Hall sensor (e.g., GEMS + A1171, min flow 0.08 GPM) is needed alongside the generator: the paired Option C configuration.
-
-> Specific circuit topology for sleep switching and battery management is out of scope. Design principle: size the battery to cover expected sleep duration at sleep current draw; size the turbine to replenish it within a normal active flow event.
+> Specific circuit topology for sleep switching and battery management is out of scope. Design principle: size the battery to cover expected sleep duration at sleep current; size the turbine to replenish it within a normal active flow event.
 
 ---
 
-## 6. Turbine Selection Framework
+## 8. Turbine Selection Framework
 
-### 6.1 Input Criteria
+### 8.1 Input Criteria
+
+The selection process matches a product's **water-usage profile** and **power-needs profile** against each turbine's measured Cost / Reward function.
 
 | Input | Description | Default / Notes |
 |---|---|---|
 | **Flow range (GPM)** | Expected operating range; assume normal distribution | Required |
-| **Power needs** | Average power when running (mW) or energy per gallon (mWh/gal) | Required |
-| **Sensing?** | Yes / No | Required |
-| **Pressure budget (PSI)** | Maximum allowable $\Delta P$ across the turbine | Default 50 PSI. Legal min 25 PSI, legal max 80 PSI |
-| **Price budget** | Maximum unit cost | Optional. If unknown, becomes a visualization axis |
+| **Flow frequency** | How often the fixture sees flow (e.g., bursts/day) | Required |
+| **Flow duration** | Typical event length (seconds to minutes) | Required |
+| **Power tier** | Sensor only, low-power display, BLE / radio connectivity | Required |
+| **Sensing?** | Yes / No (if yes what are accuracy needs)| Required |
+| **Pressure budget (PSI)** | Maximum allowable ΔP | Default 50 PSI. Legal min 25, legal max 80 |
+| **Price budget** | Max unit cost | Optional; if unknown, use as a visualization axis |
 
-### 6.2 Product Tiers
+Power tier menu (rough numbers, refine per product):
 
-| Tier | What's Included | Added Requirements | Out of Scope |
-|---|---|---|---|
-| **Raw AC** | Turbine only (or regulated-DC unit with accessible coil leads) | None | Product-ready regulated DC output |
-| **Raw AC + Sensing** | Turbine + Hall sensor inside body + load shutoff switch + small battery | Battery pre-charged; system detects when generation stops and switches to open-circuit sensing | Regulated DC product, specific MCU firmware |
+| Tier | Typical Continuous Power | Notes |
+|---|---|---|
+| Sensor only | ~0.1 to 1 mW | MCU + Hall only |
+|Sensor and other sink functions| ~5 to 10mW|Solenoid and/or hand sensor
+| Low-power display | ~10 to 20 mW | Adds LCD or e-ink |
+| BLE / radio connectivity | ~20 to 50 mW peak (bursty) | Needs storage to buffer transmits |
 
-Regulated-DC units (e.g., Zurn P6900) can be used as a raw-AC tier only by opening the housing and tapping the coil leads directly. This is a benchtop / custom-housing path, not an off-the-shelf one. Making regulated DC from scratch is out of scope for turbine selection.
+### 8.2 Selection Logic
 
-### 6.3 Selection Logic
+Each turbine has a **Cost function** (ΔP vs. $Q$) and a **Reward function** (power at fixed load vs. $Q$), measured on the bench. Selection is a matching exercise:
 
-1. **Filter by flow range:** Focus on turbines where $Q_{eff}$ (or $R_{max}$ operating range) overlaps the most probable flow rates.
-2. **Filter by pressure budget:** Use the Cost portion of the normalized Cost/Reward chart per turbine. Eliminate turbines whose $\Delta P$ at the expected flow rate exceeds the budget.
-3. **Check power output:** Confirm output meets power need at expected flow rate. Convert if needed:
+1. **Filter by flow range and pressure budget.** Use the Cost portion of each turbine's Cost / Reward chart. Eliminate turbines whose ΔP at the expected flow exceeds budget, or whose usable range doesn't overlap the product's flow distribution.
+2. **Match Reward to power tier.** For the expected flow, frequency, and duration, integrate Reward against the power tier requirement. A short, frequent flow event into a BLE-connected node implies large transient draw and benefits from a turbine that hits high power quickly; a long, infrequent event into a sensor-only PID can tolerate a turbine that takes longer to reach steady-state.
+3. **Apply sensing requirement.** If sensing is required, confirm the turbine can physically fit a Hall sensor (or that frequency-based sensing on the raw output is acceptable). Regulated-output turbines require Hall + custom housing; power-based sensing alone is not recommended, especially with accuracy constraints (see §6.2).
+4. **Apply price filter.**
 
-$$\text{mWh/gal} = \frac{P_{mW}}{Q_{GPM} \times 60}$$
+Step 2 above (matching the turbine's Cost / Reward function to a specific product's water-usage and power-needs profile) is the **next step** in this work, executed once the full catalogue has been bench-characterized. The framework is set up; the data fills in turbine-by-turbine.
 
-> Derivation: energy per gallon = $P / Q$. With $P$ in mW and $Q$ in GPM, mWh/gal $= P \text{ [mW]} \times (1 \text{ hr}) / (Q \text{ [GPM]} \times 60 \text{ min/hr}) = P / (60 \cdot Q)$.
+### 8.3 Visualization
 
-4. **Apply sensing tier:** If sensing is required, confirm the turbine can physically fit a Hall sensor. Regulated-output turbines require Hall sensing and custom housing; power-based sensing is not available on those.
-5. **Apply price filter.**
+Plot all turbines on a 2D scatter with axes chosen from the unknowns or trade-offs of interest (e.g., peak power vs. ΔP at expected $Q$, or price vs. peak power). Each point is one turbine. This is the visual companion to the matching process in §8.2 and the most useful single artifact when comparing options for a new product.
 
-### 6.4 Two-Unknown Visualization
-
-If two inputs are unknown, generate a scatter plot, one point per turbine, two unknown variables as axes, for visual trade-off comparison.
+A list of suitable applications is built up under each turbine in the catalogue as candidates are eliminated or confirmed by the matching process.
 
 ---
 
-## 7. Application Examples
+## 9. Application Examples
 
-Two Watts product lines are used as worked examples: **Bradley** commercial restroom faucets and **Haws** bottle-filling stations. Neither currently has IoT capability. These show how real product requirements translate into framework inputs.
+Two Watts product lines are used as worked examples: **Bradley** commercial restroom faucets and **Haws** bottle-filling stations. Both have flow-sensing and/or IoT needs that justify going through the selection process, and both are good candidates for a future-proofed self-powered architecture.
 
-### 7.1 Bradley: Adding IoT to a Commercial Restroom Faucet
+### 9.1 Bradley, Commercial Restroom Faucet
 
-**Context:** Bradley restroom faucets have no IoT capability. The goal is to add flow sensing and wireless connectivity (usage monitoring, anomaly detection, volume tracking) without wired power or battery replacement.
-
-**Input criteria:**
+**Context:** Bradley restroom faucets currently lack flow sensing and IoT capability. Adding usage monitoring, anomaly detection, and volume tracking without wired power or battery replacement is the goal. Restroom flow events are short (seconds), frequent (many per day), and clustered around peak hours.
 
 | Input | Value |
 |---|---|
-| Flow range | 0.5-1.5 GPM (typical commercial restroom; normal distribution assumed) |
-| Power needs | Run low-power MCU + Hall sensor during flow events; trickle-charge a backup battery |
+| Flow range | 0.5 to 1.5 GPM |
+| Flow frequency | TBD |
+| Flow duration | Short (~5 to 15 s per event) |
+| Power tier | Up to BLE connectivity |
 | Sensing? | Yes |
 | Pressure budget | 50 PSI (default) |
 | Price budget | TBD |
 
-Sensing required means Raw AC + Sensing tier. Specific turbine recommendation deferred until full catalogue $R_{eff}/Q_{eff}$ data is available.
+Configuration is open: a turbine with internal Hall sensing and a small buffer battery (config 4 in §7.1) is the most natural fit for IoT, but a "power + frequency sensing" path on a turbine with raw AC output is also viable if the candidate turbine's frequency signal is clean enough at expected flows. Specific recommendation deferred until catalogue $R_{eff}$ / $Q_{eff}$ data is complete.
 
-### 7.2 Haws: Bottle-Filling Station PID and IoT Upgrade
+### 9.2 Haws, Bottle-Filling Station PID and IoT Upgrade
 
-**Context:** Haws bottle-filling stations use replaceable water filters with rated gallon limits. A **Performance Indicating Device (PID)** is required under NSF/ANSI 42 (§5.3.2) and NSF/ANSI 53 (§6.3.2). PID requirements:
+**Context:** Haws bottle-filling stations use replaceable filters with rated gallon limits. A **Performance Indicating Device (PID)** is required under NSF/ANSI 42 (§5.3.2) and NSF/ANSI 53 (§6.3.2). PID requirements:
 
-- Track **actual water volume** by physical displacement: a rotating turbine or positive-displacement element counting real gallons. Time-based estimation does not qualify.
+- Track **actual water volume** by physical displacement (rotating turbine or positive-displacement). Time-based estimation does not qualify.
 - Built-in, not aftermarket.
 - Operates automatically; manually resettable after filter replacement.
 - Non-adjustable end-of-life setpoint.
-- Clearly distinguishable visual or audible indicator when filter must be replaced (NSF does not mandate a specific color but requires a distinct warning state, described in the user manual).
+- Distinct visual or audible end-of-life indicator (NSF doesn't mandate a specific color but requires a distinct warning state).
 
-Per NSF/ANSI 53, a certified PID allows filter life testing to 120% of rated capacity rather than 200% without one, enabling the manufacturer to claim a specific filter life.
+Per NSF/ANSI 53, a certified PID allows filter life testing to 120% of rated capacity rather than 200% without one.
 
-The current solution is the **Digiflow 8100T-22** ($17.33, 2x AA batteries, ~3-year life replaced with the filter, LCD display).
+Current solution: **Digiflow 8100T-22** ($17.33, 2x AA, ~3-year life replaced with the filter 2,000 gallons, LCD display).
 
-**Goals by price point:**
+**Two goals at different price points:**
 
 | Goal | Description |
 |---|---|
-| **Cost reduction** | Build a compliant rotary-turbine PID for less than $17.33 |
-| **IoT upgrade** | Add cloud connectivity or remote monitoring using flow-generated power, beyond what 2x AA can support |
-
-**Input criteria:**
+| **Cost reduction** | Compliant rotary-turbine PID for less than $17.33 |
+| **IoT upgrade** | Add cloud connectivity using flow-generated power, beyond what 2x AA supports |
 
 | Input | Value |
 |---|---|
-| Flow range | 0.5-1.6 GPM (Haws filter operating range; inlet pressure TBD) |
-| Power needs | PID only: ~3 mW active / ~45 μW sleep. IoT tier: TBD per radio selection |
-| Sensing? | Yes, cumulative gallon count required |
+| Flow range | 0.5 to 1.6 GPM |
+| Flow frequency | TBD |
+| Flow duration | Medium (15-30 seconds) |
+| Power tier | PID only (sensor + LCD): ~3 mW active / ~45 μW sleep. IoT tier: BLE, TBD |
+| Sensing? | Yes (cumulative gallon count required) |
 | Pressure budget | 50 PSI (default; confirm Haws inlet spec) |
-| Price budget | <$17.33 for cost-reduction; relaxed for IoT tier |
+| Price budget | < $17.33 cost-reduction; relaxed for IoT |
 
-Flow range closely overlaps Bradley so the same candidate turbines apply. For cost reduction, sensing is the primary need. For IoT, the turbine must sustain a radio (BLE ~5-15 mW active) and trickle-charge a backup battery during sleep. Operating state budget follows the model in §5.3.
+Flow range overlaps Bradley closely so the same candidate turbines apply. The cost-reduction goal is sensing-dominant and could be served by config 1 or a low-cost turbine in config 3. The IoT goal requires sustained BLE plus trickle-charging during sleep, pointing toward config 4 or 5. As with Bradley, final selection comes out of the matching exercise in §8.2.
 
----
-
-## Appendix A: Spec Template
-
-| Category           | Parameter                   | Value                                   |
-| ------------------ | --------------------------- | --------------------------------------- |
-| **Classification** | Rotor type                  | Axial / Radial                          |
-|                    | Admission                   | Full / Partial                          |
-|                    | Flux type                   | Axial / Radial                          |
-|                    | Coil type                   | Claw pole / Belt / Hub generator / Gyro |
-|                    | Coil config                 | Single / Dual / Multi                   |
-|                    | Output type                 | Raw AC / Unregulated DC / Regulated DC  |
-|                    | Claw poles (if applicable)  |                                         |
-| **Measured**       | $N$ (turns)                 |                                         |
-|                    | $R_{coil}$ (total, DC)      |                                         |
-|                    | Wire gauge                  |                                         |
-|                    | Coil ID / OD (mm)           |                                         |
-| **Cannot Measure** | $B$ (magnetic field)        | No gaussmeter                           |
-|                    | $L$ (inductance)            | LH meter TBD                            |
-| **Experimental**   | Lumped flux coupling        | From open-circuit tests                 |
-|                    | $\eta_{turbine}$            |                                         |
-|                    | $c_f$ (viscous friction)    |                                         |
-|                    | $\tau_0$ (static friction)  |                                         |
-|                    | $R_{eff}$ (Ω)               | From efficiency vs. $R$ sweep           |
-|                    | $Q_{eff}$ (GPM)             | Flow rate at peak efficiency            |
-|                    | Min Flow = $Q_{eff}$?       | True / False                            |
-|                    | $R_{max}$ (Ω)               | If Min Flow = $Q_{eff}$; else N/A       |
-| **Design Point**   | $\Delta P$ (rated pressure) |                                         |
-|                    | $Q$ (rated flow)            |                                         |
-|                    | $P_{load}$ (rated power)    |                                         |
-|                    | $R_{load}$ (design load)    | $R_{eff}$ or $R_{max}$                  |
-
----
-
-## Appendix B: Catalogue: Flow Meters
+## Appendix A: Catalogue: Flow Meters
 
 ![[Pasted image 20260424110120.png]]
 
 ---
 
-## Appendix C: Catalogue: Generators
-
-### Output Type Key
-
-| Output Type        | Description                                                                                                                                                                                     |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Raw AC**         | Unprocessed alternating current from the coil. No built-in circuitry. Frequency and amplitude both usable for sensing (see §4.5).                                                               |
-| **Unregulated DC** | Built-in diode bridge rectifies AC; voltage still varies with flow. Power at a fixed load usable for sensing.                                                                                   |
-| **Regulated DC**   | Built-in voltage regulator holds output constant. Flow and pressure information lost at the output terminals. Power delivery only (or flow sense with internal-Hall sensor via custom housing). |
-
-### Generator Comparison
+## Appendix B: Catalogue: Generators
 
 ![[Pasted image 20260424105619.png]]
 
-**Testing summary:** Full bench characterization (R-sweep $\times$ Q-sweep) is complete for the **Zurn P6900** ($R_{eff}$ / $Q_{eff}$ demo, §4.4) and the **M6 Axial Propeller** ($R_{max}$ demo, §4.3). All other turbines have partial test data and are pending full bench time.
