@@ -17,8 +17,8 @@
 7. [System Architectures](#7-system-architectures)
 8. [Turbine Selection Framework](#8-turbine-selection-framework)
 9. [Application Examples](#9-application-examples)
-- [Appendix A: Catalogue: Flow Meters](#appendix-b-catalogue-flow-meters)
-- [Appendix B: Catalogue: Generators](#appendix-c-catalogue-generators)
+- [Appendix A: Catalogue: Flow Meters](#appendix-a-catalogue-flow-meters)
+- [Appendix B: Catalogue: Generators](#appendix-b-catalogue-generators)
 ---
 
 ## 1. Overview & Background
@@ -31,6 +31,10 @@ This document is a master reference for **flow sensing and power generation** re
 - Accurate at low flow rates
 - Low power consumption
 - Potential for self-powered operation (no wired power, no battery replacement)
+
+The concrete output of this work is a populated turbine catalog with bench-validated Cost/Reward curves, a selection framework that maps application profiles to turbine choices, and reference architectures for each power tier — sufficient for a product team to specify a turbine and circuit topology without re-running the underlying analysis.
+
+> **Out of scope:** turbines for flow rates above 4 GPM and continuous-flow industrial applications. These are planned future work but are not part of this research phase.
 
 ### 1.1 Why Rotary? Why 0 to 4 GPM?
 
@@ -153,25 +157,57 @@ Full admission generators can start generating at lower flow rates (critical for
 | **Flux vs rotation axis** | Parallel (along spin axis) | Perpendicular (across spin axis) |
 | **Typical coil shape** | Pancake (claw pole) or wrapped cylinder (belt) | Small rings pointing inward, or ring-in-ring |
 | **Flux guides needed?** | Yes, always | Typically no |
-| **Cycles per revolution** | Magnet pole pairs × claw-pole pairs | Magnet pole pairs |
+| **Cycles per revolution** | Magnet pole pairs (claw count must match both pole sets for correct flux alternation, but does not multiply cycle count) | Magnet pole pairs |
+
+> **Note on stator claws:** Stator claws are soft-iron flux guides, not additional pole pairs. They redirect the axial field from above and below the rotor through the coil, causing the field seen by the coil to swap polarity with each half-revolution of the magnet. The claw count must be aligned with both sets of magnet poles so that the field swap occurs cleanly — misalignment wastes flux coupling. RPM is a purely mechanical quantity (rotor speed) and is unrelated to pole or claw count.
 
 #### Coil Configurations
 
 | Our Name | Literature Name | Flux | Description | Example |
 |---|---|---|---|---|
-| **Claw pole** | Claw pole | Axial | Pancake coil above soft-iron claws that funnel flux through the coil | Zurn P6900 |
-| **Belt** | Axial flux wrapped | Axial | Coil wraps around rotor cylinder, enclosing the magnet. Best flux coupling of the axial types | Toto EcoPower, Toto 10s Dynamo (EDV462/EDV561) |
+| **Claw pole, single-sided** | Claw pole | Axial | One claw piece above a pancake coil; claws point downward. | Toto EDV; Toto EcoPower |
+| **Claw pole, dual-sided symmetric** | Claw pole | Axial | Two interleaved claw pieces above and below the coil; classic flux redirector. | Toto 10s Dynamo (EDV462 / EDV561) |
+| **Claw pole, dual-sided asymmetric** | Claw pole | Axial | Coil above rotor; both claw sets reach downward on either side. Only known example. | Zurn P6900 |
 | **Spoke** | Hub generator | Radial | Multiple small coils facing inward; magnet ring spins outside (outrunner) | F50 |
 | **Gyro** | Radial flux ring | Radial | Ring inside another ring; streamlined for in-pipe mounting | M6 axial propeller |
 
-#### Belt Sub-Categories
+#### Axial Coil Circuit Count
 
-- **Single coil:** one electrical circuit, two wires (e.g., Toto EcoPower).
-- **Dual coil:** two independent circuits, four wires. One coil dedicated to always-on critical functions (solenoid, MCU); the other powers shed-able functions (display, radio). The Toto 10s Dynamo uses this with a high-inductance secondary coil. Toto advertises that 10 seconds of flow fully initializes the electronics and sustains power briefly after flow stops for clean valve closure. Tradeoff: high inductance increases rotor braking.
+Some axial generators use two electrically independent coils on the same stator: one powers priority functions (MCU, solenoid); the second powers ancillary loads (display, radio). This ensures critical tasks are never starved.
+
+| Circuit count | Description | Example |
+|---|---|---|
+| Single | One circuit, two wires | Toto EcoPower |
+| Dual | Two independent circuits, four wires. High-inductance secondary coil increases rotor braking. 10 s of flow fully initializes electronics; sustains briefly after cutoff. | Toto 10s Dynamo (EDV462 / EDV561) |
 
 #### Three-Phase (Spoke / Hub)
 
 Spoke designs use 3n non-overlapping coils like a motor. Six diodes confirm 3-phase generation (3-phase bridge rectifier). Smoother power delivery and even braking, but reduced ripple is a disadvantage if ripple frequency is being used to infer RPM (see §6.3).
+
+### 3.4.1 Coil Resistance and Application Fit
+
+Coil DC resistance ($R_{coil}$) is a quick indicator of a generator's electrical character and helps predict what applications and load types it is best suited for.
+
+**How $R_{coil}$ is set by construction:**
+
+- More turns of wire → proportionally higher open-circuit voltage ($V_{oc} = N \cdot B \cdot A \cdot \omega$), but also higher resistance (more wire length).
+- Thinner wire → higher resistance per unit length, compounding the effect of more turns.
+- Result: high-turn / thin-wire coils have high $R_{coil}$ and high voltage-per-RPM; low-turn / thick-wire coils have low $R_{coil}$ and low voltage-per-RPM but can deliver more current.
+
+**Important caveat — inductive reactance:** The optimal load resistance measured on the bench ($R_{eff}$ or $R_{max}$) is always higher than $R_{coil}$, often significantly so. This is because inductive reactance ($\omega L$) adds to the source impedance at the AC frequencies produced by these turbines. $R_{coil}$ alone does not predict optimal load; it must be measured. However, $R_{coil}$ is still a fast qualitative indicator.
+
+| | High $R_{coil}$ (many turns, thin wire) | Low $R_{coil}$ (few turns, thick wire) |
+|---|---|---|
+| **Voltage at low RPM** | Higher — turns compensate for slow rotation | Lower — needs faster spin |
+| **Current delivery** | Lower | Higher |
+| **Optimal load impedance** | High | Low |
+| **Best flow range** | Low-flow fixtures (faucet, sink) | Higher-flow / higher-pressure (shower, bottle filler) |
+| **Energy storage pairing** | Boost converters, higher-voltage rails | Direct supercap, low-voltage LDO |
+| **Example** | M6 propeller ($R_{coil}$ = 161.6 Ω) | Zurn P6900 ($R_{coil}$ = 3.6 Ω) |
+
+This is one of the columns populated in the generator catalogue (Appendix B) as bench testing proceeds.
+
+---
 
 ### 3.5 Physics: Power Generation
 
@@ -278,14 +314,35 @@ Picking the resistance that produces the most raw power at a single flow rate is
 
 A lookup table indexed by flow rate can switch between a small set of resistors, populated from bench data (not real-time tracking). Adds ~$ 2 to $ 5 BOM. Worth considering when the operating range has a large span or if the optimal $R$ shifts dramatically across its range. For most 0 to 4 GPM applications, a fixed $R_{eff}$ or $R_{max}$ captures the large majority of the available benefit, as shown in §5.1 Step 2.
 
+#### Real-Time MPPT (Maximum Power Point Tracking) ICs
+
+Pre-programmed lookup tables require bench data and add firmware complexity. A simpler alternative is a dedicated energy harvesting IC that performs real-time impedance tracking automatically.
+
+| IC | Approach | Cold-start Voltage | Output | Notes |
+|---|---|---|---|---|
+| **TI BQ25570** | MPPT: samples Voc, sets load to ~80% Voc | ~330 mV | Regulated + LiPo charge | Most commonly cited for kinetic harvesters |
+| **e-peas AEM10941** | MPPT, dual output | ~380 mV | Two regulated rails | Good for split always-on / shed-able architecture |
+| **Analog Devices LTC3588** | Fixed internal bridge + LDO | ~1.8 V (no cold-start assist) | Adjustable DC | Lower complexity, less suitable for ultra-low-flow |
+
+For products where the extra ~$2–4 BOM cost is acceptable, these chips make the static vs. dynamic load question largely moot. For cost-constrained products, the static $R_{eff}$ approach captures the majority of available power (demonstrated to be ~86% of theoretical max on the Zurn P6900 at the tested operating range).
+
+**Decision rule:**
+- Cost-sensitive / simple load: use static $R_{eff}$ or $R_{max}$ from bench data.
+- Mid-tier: pre-programmed lookup table, ~$2–5 BOM.
+- Performance-sensitive or wide operating range: MPPT IC, ~$2–4, automatic.
+
+---
+
 ### 4.3 Standard Output: Cost / Reward Chart
 
-Once the fixed load is chosen, each turbine is summarized by a **normalized Cost / Reward chart**:
+Once the fixed load is chosen, each turbine is characterized by a Cost / Reward chart:
 
-- **Cost:** ΔP vs. $Q$ (hydraulic cost imposed on the system)
-- **Reward:** Power vs. $Q$ at the chosen fixed load (electrical output)
+| Series | Y-axis | Description |
+|---|---|---|
+| Cost | ΔP (PSI) | Hydraulic penalty imposed on the system |
+| Reward | Power (mW) | Electrical output at the chosen fixed load |
 
-Both are expressed as percent of their turbine-specific maximum, so they share one axis. Conversion factors back to engineering units are given per-turbine in the caption.
+Both plotted against flow rate (GPM).
 
 ---
 
@@ -371,7 +428,7 @@ config:
       plotColorPalette: "#E53935, #1E88E5"
 ---
 xychart-beta
-  title "Normalized Cost / Reward vs Flow Rate (Zurn P6900, R_eff=80Ω)"
+  title "Cost / Reward vs Flow Rate (Zurn P6900, R_eff=80Ω)"
   x-axis "Flow Rate (GPM)" 0.167 --> 0.667
   y-axis "Percent of Max (%)" 0 --> 100
   line [6.8, 15.1, 29.4, 48.1, 66.2, 100.0]
@@ -557,6 +614,43 @@ Step 2 above (matching the turbine's Cost / Reward function to a specific produc
 Plot all turbines on a 2D scatter with axes chosen from the unknowns or trade-offs of interest (e.g., peak power vs. ΔP at expected $Q$, or price vs. peak power). Each point is one turbine. This is the visual companion to the matching process in §8.2 and the most useful single artifact when comparing options for a new product.
 
 A list of suitable applications is built up under each turbine in the catalogue as candidates are eliminated or confirmed by the matching process.
+
+---
+
+## 8.4 Fixture Usage Profiles and Energy Tier Assignments
+
+Usage profiles are characterized by three values per fixture: **flow rate (GPM)**, **duration per event (seconds)**, and **frequency (events per day per fixture)**. These determine flow seconds per day and total daily volume, which sets the harvestable energy budget for turbine and storage sizing.
+
+Sources: EPA WaterSense, EPAct 1992, ASME A112.18.1/CSA B125.1, LEED v4 WE Indoor Water Use Reduction (USGBC), AWWA Research Foundation "Commercial and Institutional End Uses of Water" (Dziegielewski et al., 2000), IPC Table 403.1, Haws/Bradley/Elkay product data sheets.
+
+Environment definitions:
+- **Low** — private-use context: hospital private room, small private office (3–10 potential users per fixture)
+- **Medium** — standard commercial: office building, school, clinic (30–60 users per fixture)
+- **High** — high-traffic institutional: airport, stadium, transit hub (100–400+ users per fixture)
+
+| Fixture | Environment | Flow Rate (GPM) | Duration/Event (sec) | Events/Day | Gal/Event | Gal/Day | Flow Sec/Day | Energy Tier |
+|---|---|---|---|---|---|---|---|---|
+| Restroom faucet (sensor/metering) | Low | 0.5 | 12 | 12 | 0.10 | 1.2 | 144 | 1 |
+| Restroom faucet (sensor/metering) | Medium | 0.5 | 12 | 45 | 0.10 | 4.5 | 540 | 2 |
+| Restroom faucet (sensor/metering) | High | 0.5 | 12 | 175 | 0.10 | 17.5 | 2,100 | 3 |
+| Restroom faucet (manual aerator) | Low | 1.5 | 12 | 12 | 0.30 | 3.6 | 144 | 1 |
+| Restroom faucet (manual aerator) | Medium | 1.5 | 12 | 45 | 0.30 | 13.5 | 540 | 2 |
+| Restroom faucet (manual aerator) | High | 1.5 | 12 | 175 | 0.30 | 52.5 | 2,100 | 3 |
+| Bottle filling station | Low | 1.1 | 18 | 18 | 0.33 | 5.9 | 324 | 1 |
+| Bottle filling station | Medium | 1.1 | 18 | 55 | 0.33 | 18.2 | 990 | 2 |
+| Bottle filling station | High | 1.1 | 18 | 250 | 0.33 | 82.5 | 4,500 | 3–4 |
+| Kitchen sink (office) | Low | 1.8 | 25 | 18 | 0.75 | 13.5 | 450 | 2 |
+| Kitchen sink (office) | Medium | 1.8 | 25 | 60 | 0.75 | 45.0 | 1,500 | 3 |
+| Kitchen sink / pre-rinse spray | High | 1.8 | 25 | 200 | 0.75 | 150.0 | 5,000 | 4 |
+| Shower (commercial) | Low | 2.0 | 360 | 2 | 12.0 | 24.0 | 720 | 2 |
+| Shower (commercial) | Medium | 2.0 | 360 | 8 | 12.0 | 96.0 | 2,880 | 3–4 |
+| Shower (commercial) | High | 2.0 | 360 | 35 | 12.0 | 420.0 | 12,600 | 4 |
+| Toilet — flushometer | Any | ~20 GPM | 4 | varies | 1.28 | — | — | OUT OF RANGE |
+| Toilet — tank fill (gravity) | Medium | 0.75 | 60 | 35 | 0.75 | 26.3 | 2,100 | 3 |
+
+> **Critical turbine spec implication:** Minimum startup flow must be ≤ 0.35 GPM to capture sensor faucet events. If startup requires 0.5 GPM, the most common deployed faucet flow rate is missed. This is the single most important turbine selection parameter for the Watts framework.
+
+> **Note on showers:** Shower at Medium/High is the only fixture class where standalone power generation (no sensing goal) is worth considering. All other fixtures close the energy math only if sensing is the primary value and power is a bonus.
 
 ---
 
