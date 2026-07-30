@@ -1,0 +1,6 @@
+# Whirlygigs Turbine Configuration
+# Format: id,name,type
+# id: single capital letter for log file labeling
+# name: display name
+# type: turbine type (Pelton, Kaplan, Francis, etc.)
+A,Sample Turbine,Pelton
